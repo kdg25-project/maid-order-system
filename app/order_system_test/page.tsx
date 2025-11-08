@@ -1,11 +1,18 @@
-import { Order } from "@/components/order";
+"use client";
+
+import {OrderTable} from "@/components/order";
+import {UseState} from "react";
 
 function Page() {
-  return (
-    <div>
-      <Order name="Order" button="これにする" />
-    </div>
-  )
+  const products = [
+    {id:1, name:"コカコーラ"},
+    {id:2, name:"コカコーラ"},
+    {id:3, name:"コカコーラ"},
+    {id:4, name:"コカコーラ"},
+    {id:5, name:"コカコーラ"},
+    {id:6, name:"コカコーラ"},
+  ]
+  return <OrderTable item={products} />
 }
 
 export default Page;
