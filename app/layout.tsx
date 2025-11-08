@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-bl from-[#FBAFB7] via-[#E7D1D9] to-[#A8EAEF]`}
       >
