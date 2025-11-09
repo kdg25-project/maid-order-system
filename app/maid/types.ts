@@ -24,7 +24,8 @@ export interface Maid {
   id: string;
   name: string;
   image_url: string | null;
-  is_instax_available: boolean;
+  is_instax_available: boolean; 
+  is_active: boolean;
 }
 
 export type MaidsApiResponse = ApiResponse<Maid[]>;

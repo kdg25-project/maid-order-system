@@ -3,7 +3,8 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { LogOut, ScanQrCode, UserPen, User } from "lucide-react";
+import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { UserApiResponse, Maid, MaidsApiResponse, Menu, MenusApiResponse } from './types';
 import { UserEdit } from '@/components/maid/user-edit';
 import { QRCodeScan } from '@/components/maid/qrcode/qrcode-scan';
@@ -12,7 +13,7 @@ import { AlertMessage } from '@/components/maid/alert-message';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidProfile } from '@/lib/maid-auth';
+import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidActiveStatus, updateMaidProfile } from '@/lib/maid-auth';
 import { cn } from '@/lib/utils'
 
 const orderResponse = {
@@ -96,7 +97,19 @@ const activeUsers: UserApiResponse[] = [
   },
 ];
 
-const quickActions = [
+type QuickActionId = 'workable_toggle' | 'qrcode' | 'edit_profile' | 'logout';
+
+type QuickAction = {
+  id: QuickActionId;
+  label: string;
+  description: string;
+  accent: string;
+  icon: LucideIcon;
+  disabled?: boolean;
+  loading?: boolean;
+};
+
+const staticQuickActions: QuickAction[] = [
   {
     id: "qrcode",
     label: "QRコード読み込み",
@@ -118,7 +131,7 @@ const quickActions = [
     accent: "bg-rose-50 text-rose-500 border-rose-100",
     icon: LogOut,
   },
-] as const;
+];
 
 const servedStats = {
   total: 14,
@@ -180,6 +193,7 @@ export default function Home() {
   const [maidProfile, setMaidProfile] = useState<Maid | null>(null);
   const [isProfileLoading, setProfileLoading] = useState(true);
   const [isProfileSaving, setProfileSaving] = useState(false);
+  const [isActiveUpdating, setActiveUpdating] = useState(false);
   const [form, setForm] = useState<{ name: string; seat_id: number; maid_id: string }>({
     name: "",
     seat_id: 1,
@@ -375,8 +389,36 @@ export default function Home() {
     }
   }
 
+  const handleToggleWorkable = useCallback(async () => {
+    if (!credentials) {
+      showAlert('エラー', 'ログイン情報が見つかりません。再度ログインをしてください。')
+      router.replace('/maid/login')
+      return
+    }
+    if (!maidProfile) {
+      showAlert('エラー', 'メイド情報の取得が完了していません。')
+      return
+    }
+    if (isActiveUpdating) return
+
+    const nextState = !maidProfile.is_active
+    setActiveUpdating(true)
+    try {
+      const updated = await updateMaidActiveStatus(credentials, { is_active: nextState })
+      setMaidProfile(updated)
+      showAlert('完了', `稼働状態を${nextState ? '稼働中' : '休止中'}に更新しました。`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '稼働状態の更新に失敗しました。'
+      showAlert('エラー', message)
+    } finally {
+      setActiveUpdating(false)
+    }
+  }, [credentials, isActiveUpdating, maidProfile, router, showAlert])
+
   const handleQuickAction = (actionId: string) => {
-    if (actionId === 'qrcode') {
+    if (actionId === 'workable_toggle') {
+      void handleToggleWorkable()
+    } else if (actionId === 'qrcode') {
       setQRDrawerOpen(true)
     } else if (actionId === 'edit_profile') {
       setProfileDrawerOpen(true)
@@ -398,6 +440,31 @@ export default function Home() {
 
   const profileDisplayName = profileForm.name || (isProfileLoading ? "" : "メイド")
   const profileImageSrc: string | null = profileForm.image || null
+  const quickActionItems = useMemo<QuickAction[]>(() => {
+    const isActive = maidProfile?.is_active ?? false
+    const label = maidProfile ? `稼働を${isActive ? '停止' : '開始'}` : '稼働状態を切り替え'
+    const description = maidProfile
+      ? `現在は${isActive ? '稼働中' : '休止中'}です`
+      : isProfileLoading
+        ? '稼働状態を取得しています'
+        : '稼働状態を切り替えます'
+    const accent = isActive
+      ? 'bg-amber-50 text-amber-600 border-amber-100'
+      : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+
+    return [
+      {
+        id: 'workable_toggle',
+        label,
+        description,
+        accent,
+        icon: ToggleLeft,
+        disabled: isProfileLoading || !maidProfile || isActiveUpdating,
+        loading: isActiveUpdating,
+      },
+      ...staticQuickActions,
+    ]
+  }, [isActiveUpdating, isProfileLoading, maidProfile])
 
   return (
     <main className="min-h-screen bg-linear-to-b from-rose-50 via-white to-white">
@@ -444,7 +511,7 @@ export default function Home() {
         </section>
 
         <section className="grid grid-cols-2 gap-3">
-          {quickActions.map((action) => {
+          {quickActionItems.map((action) => {
             const Icon = action.icon
             return (
               <Button
@@ -452,6 +519,7 @@ export default function Home() {
                 type="button"
                 onClick={() => handleQuickAction(action.id)}
                 variant="outline"
+                disabled={action.disabled}
                 className={cn(
                   "h-auto w-full flex-col items-start justify-start gap-1.5 rounded-2xl border px-4 py-3 text-left text-sm font-medium shadow-sm transition hover:scale-[1.01] active:scale-[0.98]",
                   action.accent,
@@ -459,7 +527,11 @@ export default function Home() {
               >
                 <div className="flex items-center gap-2 whitespace-pre-line wrap-break-word">
                   <span className="rounded-full bg-white/70 p-1">
-                    <Icon className="size-4" />
+                    {action.loading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Icon className="size-4" />
+                    )}
                   </span>
                   {action.label}
                 </div>

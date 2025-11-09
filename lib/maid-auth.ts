@@ -1,4 +1,4 @@
-import { Maid, MaidApiResponse } from "@/app/maid/types";
+import { Maid, MaidApiResponse, UpdateMaidActiveRequest } from "@/app/maid/types";
 
 export interface MaidCredentials {
   id: string;
@@ -155,6 +155,24 @@ export async function updateMaidProfile(
 
   if (!response.ok) {
     throw new Error(`メイドプロフィールの更新に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: MaidApiResponse = await response.json();
+  return data.data;
+}
+
+export async function updateMaidActiveStatus(
+  credentials: MaidCredentials,
+  payload: UpdateMaidActiveRequest
+): Promise<Maid> {
+  const response = await fetch(apiUrl(`/maids/${credentials.id}/active`), {
+    method: "PATCH",
+    headers: buildAuthHeaders(credentials, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`稼働状態の更新に失敗しました (status: ${response.status}).`);
   }
 
   const data: MaidApiResponse = await response.json();
