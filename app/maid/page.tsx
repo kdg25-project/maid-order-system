@@ -11,7 +11,7 @@ import { QRCodeScan } from '@/components/maid/qrcode/qrcode-scan';
 import { ProfileEdit } from '@/components/maid/profile-edit';
 import { AlertMessage } from '@/components/maid/alert-message';
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidActiveStatus, updateMaidProfile } from '@/lib/maid-auth';
 import { cn } from '@/lib/utils'
