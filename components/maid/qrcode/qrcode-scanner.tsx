@@ -9,7 +9,7 @@ interface QRCodeScannerProps {
 
 export function QRCodeScanner({ onScan, onError }: QRCodeScannerProps) {
   return (
-    <div className="relative w-full space-y-4">
+    <div className="relative w-full space-y-4 max-w-[500px] mx-auto">
       <div className="w-full rounded-lg overflow-hidden">
         <Scanner
           onScan={(result) => {
