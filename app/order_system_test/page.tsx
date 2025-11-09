@@ -11,6 +11,8 @@ function Page() {
     {id:4, name:"コカコーラ"},
     {id:5, name:"コカコーラ"},
     {id:6, name:"コカコーラ"},
+    {id:7, name:"コカコーラ"},
+    {id:8, name:"コカコーラ"},
   ]
   return <OrderTable item={products} />
 }
