@@ -148,6 +148,21 @@ const getElapsedMinutes = (isoString: string) => {
   return Math.max(0, Math.floor(diffMs / 60000))
 }
 
+const formatElapsedTime = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours}時間${remainingMinutes}分`
+  }
+
+  if (hours > 0) {
+    return `${hours}時間`
+  }
+
+  return `${remainingMinutes}分`
+}
+
 export default function Home() {
   const router = useRouter()
   const [Users, setUsers] = useState<UserApiResponse[]>(activeUsers)
@@ -442,13 +457,13 @@ export default function Home() {
                   action.accent,
                 )}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 whitespace-pre-line wrap-break-word">
                   <span className="rounded-full bg-white/70 p-1">
                     <Icon className="size-4" />
                   </span>
                   {action.label}
                 </div>
-                <span className="text-xs text-black/60">
+                <span className="text-xs text-black/60 whitespace-pre-line wrap-break-word">
                   {action.description}
                 </span>
               </Button>
@@ -486,6 +501,7 @@ export default function Home() {
               const menu = menuLookup[order.menu_id]
               const user = userLookupLocal[order.user_id]
               const elapsedMinutes = getElapsedMinutes(order.created_at)
+              const elapsedTimeLabel = formatElapsedTime(elapsedMinutes)
               const seatLabel = user
                 ? `席番号: ${user.seat_id ?? '-'}番`
                 : '席情報なし'
@@ -507,7 +523,7 @@ export default function Home() {
                     </Badge>
                   </div>
                   <p className="text-xs font-normal text-muted-foreground">
-                    {seatLabel} ・ 約{elapsedMinutes}分 経過
+                    {seatLabel} ・ 約{elapsedTimeLabel}経過
                   </p>
                 </div>
               )
@@ -533,6 +549,7 @@ export default function Home() {
             {Users.map((user) => {
               const displayName = user.data.name ? `${user.data.name}様` : '名前未登録'
               const elapsedMinutes = getElapsedMinutes(user.data.created_at)
+              const elapsedTimeLabel = formatElapsedTime(elapsedMinutes)
 
               return (
                 <div
@@ -548,7 +565,7 @@ export default function Home() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    席番号: {user.data.seat_id ?? '-'}番 ・ 約{elapsedMinutes}分 滞在
+                    席番号: {user.data.seat_id ?? '-'}番 ・ 約{elapsedTimeLabel}滞在
                   </p>
                 </div>
               )
