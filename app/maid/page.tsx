@@ -688,10 +688,6 @@ export default function Home() {
           title={alertTitle}
           description={alertMessage}
         />
-
-        <footer className="text-center text-xs text-muted-foreground">
-          &copy; 2025 Maid Order System
-        </footer>
       </div>
     </main>
   );
