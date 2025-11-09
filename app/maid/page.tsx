@@ -560,9 +560,6 @@ export default function Home() {
               <CardTitle className="text-lg font-semibold">
                 提供待ちリスト
               </CardTitle>
-              <CardDescription>
-                現在の提供待ち一覧
-              </CardDescription>
             </div>
             <Badge variant="outline">
               残り {orderResponse.data.orders.length}件
@@ -609,9 +606,6 @@ export default function Home() {
               <CardTitle className="text-lg">
                 店内にいるユーザー
               </CardTitle>
-              <CardDescription>
-                現在店内にいるユーザー一覧
-              </CardDescription>
             </div>
             <Badge variant="outline">
               現在 {Users.length}組
