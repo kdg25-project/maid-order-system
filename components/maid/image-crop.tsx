@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
-import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
+import ReactCrop, { Crop, PixelCrop, centerCrop, convertToPixelCrop, makeAspectCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,26 @@ interface ImageCropDialogProps {
   onComplete: (croppedImage: string) => void;
 }
 
+const getCenteredSquareCrop = (mediaWidth: number, mediaHeight: number) => {
+  if (!mediaWidth || !mediaHeight) return;
+
+  const sizePercent = (Math.min(mediaWidth, mediaHeight) / mediaWidth) * 100;
+
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: "%",
+        width: sizePercent,
+      },
+      1,
+      mediaWidth,
+      mediaHeight
+    ),
+    mediaWidth,
+    mediaHeight
+  );
+};
+
 export function ImageCropDialog({ open, image, onCancel, onComplete }: ImageCropDialogProps) {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -20,18 +40,13 @@ export function ImageCropDialog({ open, image, onCancel, onComplete }: ImageCrop
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
+    const { width: renderedWidth, height: renderedHeight } = e.currentTarget.getBoundingClientRect();
     setImageDimensions({ width: naturalWidth, height: naturalHeight });
-    const size = Math.min(naturalWidth, naturalHeight) * 0.8;
-    const x = (naturalWidth - size) / 2;
-    const y = (naturalHeight - size) / 2;
-
-    setCrop({
-      unit: "px",
-      width: size,
-      height: size,
-      x,
-      y,
-    });
+    const nextCrop = getCenteredSquareCrop(renderedWidth, renderedHeight);
+    if (nextCrop) {
+      setCrop(nextCrop);
+      setCompletedCrop(convertToPixelCrop(nextCrop, renderedWidth, renderedHeight));
+    }
   };
 
   const getCroppedImg = async () => {
