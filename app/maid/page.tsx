@@ -535,10 +535,10 @@ export default function Home() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">
-                接客中のユーザー
+                店内にいるユーザー
               </CardTitle>
               <CardDescription>
-                現在接客中のユーザー一覧
+                現在店内にいるユーザー一覧
               </CardDescription>
             </div>
             <Badge variant="outline">
