@@ -1,7 +1,7 @@
 "use client";
 
 import {OrderTable} from "@/components/order";
-import {UseState} from "react";
+import {useState} from "react";
 
 function Page() {
   const products = [
