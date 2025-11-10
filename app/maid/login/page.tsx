@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { QRCodeScan } from "@/components/maid/qrcode/qrcode-scan"
 import { ImageCropDialog } from "@/components/maid/image-crop"
 import { AlertMessage } from "@/components/maid/alert-message"
-import { MaidCredentials, createMaid, credentialsFromSearchParams, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, saveMaidCredentials, updateMaidProfile } from "@/lib/maid-auth"
+import { MaidCredentials, credentialsFromSearchParams, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, saveMaidCredentials, updateMaidProfile } from "@/lib/maid-auth"
+import { useForceMaidDeactivate } from "@/lib/force-maid-deactivate"
 import { Maid } from "../types"
 
 type LoginStatus =
@@ -88,6 +89,7 @@ function MaidLoginContent() {
   const [cropSourceImage, setCropSourceImage] = useState<string | null>(null)
   const [selectedImageName, setSelectedImageName] = useState("profile.jpg")
   const [isMissingImageDialogOpen, setMissingImageDialogOpen] = useState(false)
+  const forceDeactivateMaid = useForceMaidDeactivate(credentials)
 
   useEffect(() => {
     let cancelled = false
@@ -160,14 +162,30 @@ function MaidLoginContent() {
 
     let cancelled = false
 
+    const pauseOrFail = async () => {
+      const pausedProfile = await forceDeactivateMaid({
+        onError: (message) => {
+          setErrorMessage(`稼働状態を休止にできませんでした。${message}`)
+        },
+      })
+      if (cancelled) return null
+      if (!pausedProfile) {
+        setStatus("error")
+        return null
+      }
+      return pausedProfile
+    }
+
     const bootstrap = async () => {
       try {
         if (status === "checking_existing") {
           const existing = await fetchMaidProfile(credentials)
           if (cancelled) return
           if (existing) {
-            setMaidProfile(existing)
-            if (isProfileComplete(existing)) {
+            const pausedProfile = await pauseOrFail()
+            if (!pausedProfile || cancelled) return
+            setMaidProfile(pausedProfile)
+            if (isProfileComplete(pausedProfile)) {
               redirectToDashboard()
               return
             }
@@ -180,10 +198,11 @@ function MaidLoginContent() {
         }
 
         if (status === "creating_profile") {
-          const created = await createMaid(credentials)
           if (cancelled) return
-          setMaidProfile(created)
-          if (isProfileComplete(created)) {
+          const pausedProfile = await pauseOrFail()
+          if (!pausedProfile || cancelled) return
+          setMaidProfile(pausedProfile)
+          if (isProfileComplete(pausedProfile)) {
             redirectToDashboard()
           } else {
             setStatus("needs_setup")
@@ -204,7 +223,7 @@ function MaidLoginContent() {
     return () => {
       cancelled = true
     }
-  }, [credentials, bootstrapToken, isProfileComplete, redirectToDashboard, status])
+  }, [credentials, forceDeactivateMaid, bootstrapToken, isProfileComplete, redirectToDashboard, status])
 
   useEffect(() => {
     return () => {

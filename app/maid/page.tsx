@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User, Sparkle } from "lucide-react";
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidActiveStatus, updateMaidProfile } from '@/lib/maid-auth';
+import { useForceMaidDeactivate } from '@/lib/force-maid-deactivate'
 import { cn } from '@/lib/utils'
 
 const orderResponse = {
@@ -204,25 +205,7 @@ export default function Home() {
     name: "",
     image: "",
   })
-  const isForcingInactiveRef = useRef(false)
-
-  const forceDeactivateMaid = useCallback(async (options?: { onError?: (message: string) => void }) => {
-    if (!credentials) return false
-    if (isForcingInactiveRef.current) return true
-    isForcingInactiveRef.current = true
-    try {
-      const updated = await updateMaidActiveStatus(credentials, { is_active: false })
-      setMaidProfile(updated)
-      return true
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '稼働状態の更新に失敗しました。'
-      console.error('Failed to set maid inactive state automatically', error)
-      options?.onError?.(message)
-      return false
-    } finally {
-      isForcingInactiveRef.current = false
-    }
-  }, [credentials])
+  const forceDeactivateMaid = useForceMaidDeactivate(credentials)
 
   const showAlert = useCallback((title: string, message: string) => {
     setAlertTitle(title)
@@ -454,13 +437,13 @@ export default function Home() {
 
     if (credentials) {
       setLogoutProcessing(true)
-      const success = await forceDeactivateMaid({
+      const pausedProfile = await forceDeactivateMaid({
         onError: (message) => {
-          showAlert('エラー', `ログアウト前に稼働状態を休止に変更できませんでした。${message}`)
+          showAlert('エラー', `稼働状態を休止に変更できませんでした。${message}`)
         },
       })
       setLogoutProcessing(false)
-      if (!success) {
+      if (!pausedProfile) {
         setLogoutConfirmOpen(true)
         return
       }
