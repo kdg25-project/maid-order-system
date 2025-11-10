@@ -13,9 +13,8 @@ type Props = {
 export function OrderTable({ item }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [orderInput, setOrderInput] = useState(''); // 未使用
+  const [orderInput, setOrderInput] = useState('');
 
-  // 旧: [isOrderCheckModalOpen] の状態は削除
 
   const handleItemSelect = (product: Item) => {
     setSelectedItem(product);
@@ -29,14 +28,14 @@ export function OrderTable({ item }: Props) {
 
   const handleConfirmOrder = () => {
     if (selectedItem) {
-
       console.log(`${selectedItem.name} が注文に追加されました。`);
+
+      setOrderInput(selectedItem.name);
     }
     handleCloseModal();
   };
 
   const handleOpenOrderCheckModal = () => {
-
     if (item.length > 0) {
       setSelectedItem(item[0]);
       setIsModalOpen(true);
@@ -77,7 +76,9 @@ export function OrderTable({ item }: Props) {
             <p className="mx-auto py-4 px-4 p-8">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
 
             <div className="flex justify-between space-x-4">
-              <button onClick={handleConfirmOrder} className="w-1/2 bg-yellow-500 text-black font-semibold rounded-xl hover:bg-yellow-600">
+              <button
+                onClick={handleConfirmOrder}
+                className="w-1/2 bg-yellow-500 text-black font-semibold rounded-xl hover:bg-yellow-600">
                 これにする
               </button>
               <button onClick={handleCloseModal} className="w-1/2 bg-gray-300 text-gray-800 font-semibold rounded-xl hover:bg-gray-400">
@@ -90,7 +91,13 @@ export function OrderTable({ item }: Props) {
 
       <div className="bg-[#c7f0ff] p-6 rounded-lg shadow-md flex flex-col justify-between w-full mx-auto max-w-md h-full">
         <div className="flex space-space-x-2 items-center">
-          <input type="text" placeholder="注文したドリンク名" className="border border-white rounded-md bg-white px-2 py-1 flex-grow fontcolor:black font-bold p-4"/>
+          <input
+            type="text"
+            placeholder="注文したドリンク名"
+            value={orderInput}
+            onChange={(e) => setOrderInput(e.target.value)}
+            className="border border-white rounded-md bg-white px-2 py-1 flex-grow fontcolor:black font-bold p-4"
+          />
           <button
             onClick={handleOpenOrderCheckModal}
             className="bg-yellow-500 fontcolor:black px-3 py-1 rounded-full hover:bg-yellow-600 transition whitespace-nowrap p-4">
