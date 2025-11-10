@@ -75,22 +75,10 @@ export async function easyFetch<T, M extends Method = "GET", B = unknown>(
     if (isJson) {
       try {
         payload = await res.json();
-      } catch {
-        // JSON壊れてたら undefined のままにして下で扱う
-      }
+      } catch {}
     } else {
       payload = await res.text();
     }
   }
-
-  if (!res.ok) {
-    // サーバーがエラーJSONを返すケースに備えて、そのまま添付
-    throw new HttpError(
-      `HTTP ${res.status} ${res.statusText}`,
-      res.status,
-      payload,
-    );
-  }
-
   return { data: payload as T, status: res.status, headers: res.headers };
 }

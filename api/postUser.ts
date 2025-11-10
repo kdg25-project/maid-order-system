@@ -1,6 +1,8 @@
 import { easyFetch } from "@/lib/easyFetch";
 
 type User = {
+  success: boolean;
+  message: string;
   data: {
     id: string;
     name: string;
@@ -12,7 +14,7 @@ type User = {
   };
 };
 
-export default async function getUser(UserId: string) {
+export default async function fetchUser(UserId: string) {
   const response = await easyFetch<User>({
     endpoint: `/api/users/${UserId}`,
     method: "GET",
