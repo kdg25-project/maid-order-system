@@ -68,23 +68,46 @@ export function OrderTable({ item }: Props) {
 
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 bg-gray-900/70 flex items-center justify-center p-4" onClick={handleCloseModal}>
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs transform transition-all duration-300 scale-100" onClick={(e) => e.stopPropagation()}>
+          <div
+            // 縦並びのレイアウトを維持 (flex-col)
+            className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
 
-            <img src={selectedItem.image} alt={selectedItem.name} className="w-full h-auto mb-4"/>
-            <h4 className="text-sm font-extralight items-center mx-auto">*画像はイメージです</h4>
+            {/* 1. 画像コンテナ: w-full で画像を拡大 */}
+            <div className="w-full mb-4">
+              <img src={selectedItem.image} alt={selectedItem.name}
+                className="w-full max-h-48 object-contain block mx-auto"/>
+            </div>
 
-            <h3 className="text-2xl font-bold mb-4">{selectedItem.name}</h3>
-            <p className="mx-auto py-4 px-4 p-8">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
+            {/* 2. テキスト/ボタンコンテナ: w-full */}
+            <div className="w-full">
 
-            <div className="flex justify-between space-x-4">
-              <button
-                onClick={handleConfirmOrder}
-                className="w-1/2 bg-yellow-500 text-black font-semibold rounded-xl hover:bg-yellow-600">
-                これにする
-              </button>
-              <button onClick={handleCloseModal} className="w-1/2 bg-gray-300 text-gray-800 font-semibold rounded-xl hover:bg-gray-400">
-                しない
-              </button>
+              {/* 商品名: 中央寄せ */}
+              <h3 className="text-2xl font-bold mb-4 text-center">{selectedItem.name}</h3>
+
+              {/* 説明文: 中央寄せ */}
+              <p className="mb-4 text-center">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
+
+              {/* キャプション: ボタンの上に移動 */}
+              <h4 className="text-sm font-extralight text-center mx-auto mb-4">*画像はイメージです</h4>
+
+              {/* 3. ボタンエリア: flex-col で縦に並べ、左右の余白 (px-4) を追加 */}
+              <div className="flex flex-col space-y-2 px-4"> {/* flex-col と space-y-2 で縦に並べ、間にスペースを確保 */}
+                <button
+                  onClick={handleConfirmOrder}
+                  // w-full で横幅いっぱいに
+                  className="w-full bg-yellow-500 text-black font-semibold py-2 rounded-xl hover:bg-yellow-600">
+                  これにする
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  // w-full で横幅いっぱいに
+                  className="w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-xl hover:bg-gray-400">
+                  しない
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
