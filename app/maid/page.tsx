@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User } from "lucide-react";
+import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User, Sparkle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { UserApiResponse, Maid, MaidsApiResponse, Menu, MenusApiResponse } from './types';
 import { UserEdit } from '@/components/maid/user-edit';
@@ -546,11 +546,22 @@ export default function Home() {
         <Card className="border-none bg-linear-to-br from-rose-600 to-rose-300 text-white shadow-lg">
           <CardHeader className="text-white/90">
             <CardTitle className="text-lg font-semibold">
-              接客した組数
+              接客した人数
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-5xl font-semibold">{servedStats.total}組</p>
+          <CardContent className="relative space-y-4 flex items-center justify-start">
+            <p className="text-5xl font-semibold">{servedStats.total}人</p>
+            <div className='absolute bottom-0 -right-5 opacity-80'>
+              <div className='relative bottom-8 right-28 SparkleAnimation1'>
+                <Sparkle className="h-8 w-8 text-white fill-white" strokeWidth={0.5} />
+              </div>
+              <div className='relative bottom-5 right-20 SparkleAnimation2'>
+                <Sparkle className="h-10 w-10 text-white fill-white" strokeWidth={0.5} />
+              </div>
+              <div className='relative top-0 right-10 SparkleAnimation3'>
+                <Sparkle className="h-5 w-5 text-white fill-white" strokeWidth={0.5} />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
