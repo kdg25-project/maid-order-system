@@ -182,6 +182,7 @@ export default function Home() {
   const [Users, setUsers] = useState<UserApiResponse[]>(activeUsers)
   const [maids, setMaids] = useState<Maid[]>([])
   const [menus, setMenus] = useState<Menu[]>([])
+  const [isMenusLoading, setMenusLoading] = useState(true)
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [isQRDrawerOpen, setQRDrawerOpen] = useState(false)
   const [isProfileDrawerOpen, setProfileDrawerOpen] = useState(false)
@@ -264,12 +265,15 @@ export default function Home() {
 
   useEffect(() => {
     const fetchMenus = async () => {
+      setMenusLoading(true)
       try {
         const response = await fetch('https://api.kdgn.tech/api/menus')
         const data: MenusApiResponse = await response.json()
         setMenus(data.data.menus)
       } catch (error) {
         showAlert('エラー', `メニューの取得中にエラーが発生しました。${error}`)
+      } finally {
+        setMenusLoading(false)
       }
     }
     fetchMenus()
@@ -615,9 +619,19 @@ export default function Home() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-base font-semibold leading-tight">
-                        {menu?.name}
-                      </p>
+                      <div className="text-base font-semibold leading-tight">
+                        {isMenusLoading ? (
+                          <div className="space-y-1" aria-hidden="true">
+                            <div className="h-4 w-32 animate-pulse rounded-full bg-rose-100" />
+                          </div>
+                        ) : menu?.name ? (
+                          menu.name
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            メニュー情報なし
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <Badge variant="secondary" className={stateStyle.className}>
                       {stateStyle.label}
