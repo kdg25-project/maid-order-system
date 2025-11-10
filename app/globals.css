@@ -163,7 +163,7 @@
 
 @keyframes SparkleAnimation3 {
   0% {
-    transform: scale(0.4) rotate(-10deg) translateX(-20px) translateY(-10px);
+    transform: scale(0.4) rotate(-10deg) translateX(-20px) translateY(-20px);
     opacity: 0;
   }
   20% {
@@ -184,7 +184,7 @@
 .SparkleAnimation1 {
   animation: SparkleAnimation1 3.4s ease-out infinite;
   transform-origin: center;
-  animation-delay: 1.7s;
+  animation-delay: 1.3s;
   opacity: 0;
 }
 
