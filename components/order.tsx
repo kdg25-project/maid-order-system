@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 type Item = {
   name: string;
-  id:number;
+  id: number;
   stock: number;
   image: string;
 };
@@ -12,6 +14,9 @@ type Props = {
 };
 
 export function OrderTable({ item }: Props) {
+
+  const router = useRouter();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [orderInput, setOrderInput] = useState('');
@@ -37,11 +42,10 @@ export function OrderTable({ item }: Props) {
   };
 
   const handleOpenOrderCheckModal = () => {
-    if (item.length > 0) {
-      setSelectedItem(item[0]);
-      setIsModalOpen(true);
-    }
+
+    router.push('/order_conf');
   };
+
 
 
   return (
@@ -69,40 +73,38 @@ export function OrderTable({ item }: Props) {
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 bg-gray-900/70 flex items-center justify-center p-4" onClick={handleCloseModal}>
           <div
-            // 縦並びのレイアウトを維持 (flex-col)
+
             className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
 
-            {/* 1. 画像コンテナ: w-full で画像を拡大 */}
+
             <div className="w-full mb-4">
               <img src={selectedItem.image} alt={selectedItem.name}
                 className="w-full max-h-48 object-contain block mx-auto"/>
             </div>
 
-            {/* 2. テキスト/ボタンコンテナ: w-full */}
             <div className="w-full">
 
-              {/* 商品名: 中央寄せ */}
+
               <h3 className="text-2xl font-bold mb-4 text-center">{selectedItem.name}</h3>
 
-              {/* 説明文: 中央寄せ */}
+
               <p className="mb-4 text-center">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
 
-              {/* キャプション: ボタンの上に移動 */}
+
               <h4 className="text-sm font-extralight text-center mx-auto mb-4">*画像はイメージです</h4>
 
-              {/* 3. ボタンエリア: flex-col で縦に並べ、左右の余白 (px-4) を追加 */}
-              <div className="flex flex-col space-y-2 px-4"> {/* flex-col と space-y-2 で縦に並べ、間にスペースを確保 */}
+
+              <div className="flex flex-col space-y-2 px-4">
                 <button
                   onClick={handleConfirmOrder}
-                  // w-full で横幅いっぱいに
+
                   className="w-full bg-yellow-500 text-black font-semibold py-2 rounded-xl hover:bg-yellow-600">
                   これにする
                 </button>
                 <button
                   onClick={handleCloseModal}
-                  // w-full で横幅いっぱいに
                   className="w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-xl hover:bg-gray-400">
                   しない
                 </button>
