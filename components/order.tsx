@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 type Item = {
   name: string;
+  id:number;
   stock: number;
   image: string;
 };
