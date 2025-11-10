@@ -650,11 +650,11 @@ export default function Home() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">
-                店内にいるユーザー
+                割り当てられたユーザー
               </CardTitle>
             </div>
             <Badge variant="outline">
-              現在 {Users.length}組
+              現在 {Users.length}人
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
