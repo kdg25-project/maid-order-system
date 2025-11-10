@@ -1,4 +1,4 @@
-import { Maid, MaidApiResponse, UpdateMaidActiveRequest } from "@/app/maid/types";
+import { Maid, MaidApiResponse, MaidUsersApiResponse, UpdateMaidActiveRequest, UpdateUserRequest, User, UserApiResponse } from "@/app/maid/types";
 
 export interface MaidCredentials {
   id: string;
@@ -176,6 +176,43 @@ export async function updateMaidActiveStatus(
   }
 
   const data: MaidApiResponse = await response.json();
+  return data.data;
+}
+
+export async function fetchAssignedUsers(credentials: MaidCredentials): Promise<User[]> {
+  const response = await fetch(apiUrl(`/maids/${credentials.id}/users`), {
+    method: "GET",
+    headers: buildAuthHeaders(credentials),
+  });
+
+  if (response.status === 404) {
+    return [];
+  }
+
+  if (!response.ok) {
+    throw new Error(`割り当てユーザーの取得に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: MaidUsersApiResponse = await response.json();
+  return data.data.users;
+}
+
+export async function updateUserInfo(
+  credentials: MaidCredentials,
+  userId: string,
+  payload: UpdateUserRequest
+): Promise<User> {
+  const response = await fetch(apiUrl(`/users/${userId}`), {
+    method: "PATCH",
+    headers: buildAuthHeaders(credentials, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ユーザー情報の更新に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: UserApiResponse = await response.json();
   return data.data;
 }
 

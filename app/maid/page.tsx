@@ -3,9 +3,9 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User, Sparkle } from "lucide-react";
+import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User as UserIcon, Sparkle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { UserApiResponse, Maid, MaidsApiResponse, Menu, MenusApiResponse } from './types';
+import { User, Maid, MaidsApiResponse, Menu, MenusApiResponse } from './types';
 import { UserEdit } from '@/components/maid/user-edit';
 import { QRCodeScan } from '@/components/maid/qrcode/qrcode-scan';
 import { ProfileEdit } from '@/components/maid/profile-edit';
@@ -13,7 +13,7 @@ import { AlertMessage } from '@/components/maid/alert-message';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidActiveStatus, updateMaidProfile } from '@/lib/maid-auth';
+import { clearMaidCredentials, credentialsFromUrl, dataUrlToFile, fetchAssignedUsers, fetchMaidProfile, loadMaidCredentials, MaidCredentials, saveMaidCredentials, updateMaidActiveStatus, updateMaidProfile, updateUserInfo } from '@/lib/maid-auth';
 import { useForceMaidDeactivate } from '@/lib/force-maid-deactivate'
 import { cn } from '@/lib/utils'
 
@@ -49,54 +49,6 @@ const orderResponse = {
     ],
   },
 };
-
-const activeUsers: UserApiResponse[] = [
-  {
-    success: true,
-    message: 'OK',
-    data: {
-      id: '101',
-      name: 'お嬢',
-      status: null,
-      maid_id: '1',
-      instax_maid_id: null,
-      seat_id: 1,
-      is_valid: true,
-      created_at: '2025-01-15T10:00:00.000Z',
-      updated_at: '2025-01-16T10:00:00.000Z',
-    },
-  },
-  {
-    success: true,
-    message: 'OK',
-    data: {
-      id: '102',
-      name: 'ご主人',
-      status: null,
-      maid_id: '1',
-      instax_maid_id: null,
-      seat_id: 2,
-      is_valid: true,
-      created_at: '2025-01-16T09:30:00.000Z',
-      updated_at: '2025-01-16T10:05:00.000Z',
-    },
-  },
-  {
-    success: true,
-    message: 'OK',
-    data: {
-      id: '103',
-      name: null,
-      status: null,
-      maid_id: '1',
-      instax_maid_id: null,
-      seat_id: 3,
-      is_valid: true,
-      created_at: '2025-01-16T09:50:00.000Z',
-      updated_at: '2025-01-16T10:10:00.000Z',
-    },
-  },
-];
 
 type QuickActionId = 'workable_toggle' | 'qrcode' | 'edit_profile' | 'logout';
 
@@ -179,7 +131,8 @@ const formatElapsedTime = (minutes: number) => {
 
 export default function Home() {
   const router = useRouter()
-  const [Users, setUsers] = useState<UserApiResponse[]>(activeUsers)
+  const [assignedUsers, setAssignedUsers] = useState<User[]>([])
+  const [isUsersLoading, setUsersLoading] = useState(true)
   const [maids, setMaids] = useState<Maid[]>([])
   const [menus, setMenus] = useState<Menu[]>([])
   const [isMenusLoading, setMenusLoading] = useState(true)
@@ -189,6 +142,7 @@ export default function Home() {
   const [isLogoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [isLogoutProcessing, setLogoutProcessing] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [isUserSaving, setUserSaving] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertTitle, setAlertTitle] = useState("エラー");
@@ -200,19 +154,42 @@ export default function Home() {
   const [form, setForm] = useState<{ name: string; seat_id: number; maid_id: string }>({
     name: "",
     seat_id: 1,
-    maid_id: "1",
+    maid_id: "",
   })
   const [profileForm, setProfileForm] = useState<{ name: string; image: string }>({
     name: "",
     image: "",
   })
+  const [editingInitialMaidId, setEditingInitialMaidId] = useState<string>("")
+  const [isMaidChangeConfirmOpen, setMaidChangeConfirmOpen] = useState(false)
   const forceDeactivateMaid = useForceMaidDeactivate(credentials)
+
+  const closeEditor = () => {
+    setDrawerOpen(false)
+    setEditingId(null)
+    setEditingInitialMaidId("")
+    setMaidChangeConfirmOpen(false)
+  }
 
   const showAlert = useCallback((title: string, message: string) => {
     setAlertTitle(title)
     setAlertMessage(message)
     setAlertOpen(true)
   }, [])
+
+  const reloadAssignedUsers = useCallback(async () => {
+    if (!credentials) return
+    setUsersLoading(true)
+    try {
+      const users = await fetchAssignedUsers(credentials)
+      setAssignedUsers(users)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '割り当てユーザーの取得に失敗しました。'
+      showAlert('エラー', message)
+    } finally {
+      setUsersLoading(false)
+    }
+  }, [credentials, showAlert])
 
   useEffect(() => {
     const stored = loadMaidCredentials()
@@ -294,6 +271,11 @@ export default function Home() {
     fetchMaids()
   }, [showAlert])
 
+  useEffect(() => {
+    if (!credentials) return
+    void reloadAssignedUsers()
+  }, [credentials, reloadAssignedUsers])
+
   const menuLookup = useMemo(() => {
     return menus.reduce<Record<number, Menu>>((acc, menu) => {
       acc[menu.id] = menu
@@ -302,41 +284,83 @@ export default function Home() {
   }, [menus])
 
   const userLookupLocal = useMemo(() => {
-    return Users.reduce<Record<string, (typeof Users)[number]["data"]>>((acc, g) => {
-      acc[g.data.id] = g.data
+    return assignedUsers.reduce<Record<string, User>>((acc, user) => {
+      acc[user.id] = user
       return acc
     }, {})
-  }, [Users])
+  }, [assignedUsers])
 
   const openEditor = (id: string) => {
-    const g = Users.find((x) => x.data.id === id)
-    if (!g) return
+    const target = assignedUsers.find((user) => user.id === id)
+    if (!target) return
+    const initialMaidId = target.maid_id ?? credentials?.id ?? ""
     setEditingId(id)
     setForm({
-      name: g.data.name ?? "",
-      seat_id: g.data.seat_id ?? 1,
-      maid_id: g.data.maid_id ?? "1",
+      name: target.name ?? "",
+      seat_id: target.seat_id ?? 1,
+      maid_id: initialMaidId,
     })
+    setEditingInitialMaidId(initialMaidId)
     setDrawerOpen(true)
   }
 
-  const handleSave = () => {
+  const executeUserSave = async () => {
     if (editingId == null) return
-    setUsers(prev => prev.map(x => {
-      if (x.data.id !== editingId) return x
-      return {
-        ...x,
-        data: {
-          ...x.data,
-          name: form.name.trim() === '' ? null : form.name.trim(),
-          seat_id: form.seat_id,
-          maid_id: form.maid_id,
-          updated_at: new Date().toISOString(),
+    if (!credentials) {
+      showAlert('エラー', 'ログイン情報が見つかりません。再度ログインをしてください。')
+      router.replace('/maid/login')
+      return
+    }
+    const trimmedName = form.name.trim()
+    if (!trimmedName) {
+      showAlert('エラー', '名前を入力してください。')
+      return
+    }
+    if (isUserSaving) return
+    const targetUserId = editingId
+    const maidChanged = editingInitialMaidId !== form.maid_id
+
+    const normalizedSeatId = Number.isFinite(form.seat_id) && form.seat_id > 0 ? form.seat_id : null
+    const normalizedMaidId = form.maid_id.trim() === '' ? null : form.maid_id.trim()
+
+    try {
+      setUserSaving(true)
+      const updatedUser = await updateUserInfo(credentials, editingId, {
+        name: trimmedName,
+        seat_id: normalizedSeatId,
+        maid_id: normalizedMaidId,
+      })
+      setAssignedUsers(prev => {
+        if (maidChanged) {
+          return prev.filter(user => user.id !== targetUserId)
         }
+        return prev.map(user => user.id === targetUserId ? updatedUser : user)
+      })
+      showAlert('完了', 'ユーザー情報を更新しました。')
+      closeEditor()
+      if (maidChanged) {
+        void reloadAssignedUsers()
       }
-    }))
-    setDrawerOpen(false)
-    setEditingId(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'ユーザー情報の更新に失敗しました。'
+      showAlert('エラー', message)
+    } finally {
+      setUserSaving(false)
+    }
+  }
+
+  const handleSave = () => {
+    const trimmedName = form.name.trim()
+    if (!trimmedName) {
+      showAlert('エラー', '名前を入力してください。')
+      return
+    }
+    if (isUserSaving) return
+    if (editingInitialMaidId !== form.maid_id) {
+      setMaidChangeConfirmOpen(true)
+      return
+    }
+    void executeUserSave()
   }
 
   const handleQRScan = (result: string) => {
@@ -456,6 +480,8 @@ export default function Home() {
     clearMaidCredentials()
     setCredentials(null)
     setMaidProfile(null)
+    setAssignedUsers([])
+    setUsersLoading(true)
     setProfileForm({
       name: "",
       image: "",
@@ -491,6 +517,13 @@ export default function Home() {
     ]
   }, [isActiveUpdating, isProfileLoading, maidProfile])
 
+  const getMaidName = (maidId: string) => {
+    if (!maidId) return '未設定'
+    return maids.find((maid) => maid.id === maidId)?.name ?? '未設定'
+  }
+
+  const maidChangeDescription = `担当メイドを「${getMaidName(editingInitialMaidId)}」から「${getMaidName(form.maid_id)}」に変更します。よろしいですか？`
+
   return (
     <main className="min-h-screen bg-linear-to-b from-rose-50 via-white to-white">
       <div className="mx-auto flex min-h-screen max-w-md flex-col gap-6 px-4 pb-8 pt-4">
@@ -512,7 +545,7 @@ export default function Home() {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center rounded-full border-2 border-rose-200 bg-rose-50 text-rose-300">
-                <User className="h-8 w-8" />
+                <UserIcon className="h-8 w-8" />
               </div>
             )}
           </div>
@@ -654,42 +687,61 @@ export default function Home() {
               </CardTitle>
             </div>
             <Badge variant="outline">
-              現在 {Users.length}人
+              現在 {assignedUsers.length}人
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
-            {Users.map((user) => {
-              const displayName = user.data.name ? `${user.data.name}様` : '名前未登録'
-              const elapsedMinutes = getElapsedMinutes(user.data.created_at)
-              const elapsedTimeLabel = formatElapsedTime(elapsedMinutes)
-
-              return (
-                <div
-                  key={user.data.id}
-                  className="rounded-2xl border px-4 py-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-base font-semibold">
-                      {displayName}
-                    </p>
-                    <Button size="sm" variant="outline" onClick={() => openEditor(user.data.id)}>
-                      編集
-                    </Button>
+            {isUsersLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="rounded-2xl border px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="h-4 w-32 animate-pulse rounded-full bg-rose-100" aria-hidden="true" />
+                    <div className="h-8 w-16 animate-pulse rounded-full bg-rose-100" aria-hidden="true" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    席番号: {user.data.seat_id ?? '-'}番 ・ 約{elapsedTimeLabel}滞在
-                  </p>
+                  <div className="mt-2 h-3 w-40 animate-pulse rounded-full bg-rose-50" aria-hidden="true" />
                 </div>
-              )
-            })}
+              ))
+            ) : assignedUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                現在割り当てられているユーザーはいません。
+              </p>
+            ) : (
+              assignedUsers.map((user) => {
+                const displayName = user.name ? `${user.name}様` : '名前未登録'
+                const elapsedMinutes = getElapsedMinutes(user.created_at)
+                const elapsedTimeLabel = formatElapsedTime(elapsedMinutes)
+
+                return (
+                  <div
+                    key={user.id}
+                    className="rounded-2xl border px-4 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-base font-semibold">
+                        {displayName}
+                      </p>
+                      <Button size="sm" variant="outline" onClick={() => openEditor(user.id)}>
+                        編集
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      席番号: {user.seat_id ?? '-'}番 ・ 約{elapsedTimeLabel}滞在
+                    </p>
+                  </div>
+                )
+              })
+            )}
           </CardContent>
         </Card>
 
         <UserEdit
           open={isDrawerOpen}
           onOpenChange={(open) => {
-            setDrawerOpen(open)
-            if (!open) setEditingId(null)
+            if (open) {
+              setDrawerOpen(true)
+              return
+            }
+            closeEditor()
           }}
           form={form}
           onFormChange={setForm}
@@ -709,6 +761,19 @@ export default function Home() {
           form={profileForm}
           onFormChange={setProfileForm}
           onSave={handleProfileSave}
+        />
+
+        <AlertMessage
+          open={isMaidChangeConfirmOpen}
+          onOpenChange={setMaidChangeConfirmOpen}
+          title="担当メイドの変更"
+          description={maidChangeDescription}
+          confirmLabel="変更を保存"
+          cancelLabel="キャンセル"
+          showCancel={true}
+          onConfirm={() => {
+            void executeUserSave()
+          }}
         />
 
         <AlertMessage

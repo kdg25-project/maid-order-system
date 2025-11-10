@@ -78,6 +78,9 @@ export interface User {
 }
 
 export type UserApiResponse = ApiResponse<User>;
+export type MaidUsersApiResponse = ApiResponse<{
+  users: User[];
+}>;
 
 export interface RegisterUserRequest {
   seat_id: number;
