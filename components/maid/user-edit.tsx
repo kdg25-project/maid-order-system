@@ -38,7 +38,6 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, maids, onSave
               value={form.name}
               onChange={(e) => onFormChange({ ...form, name: e.target.value })}
             />
-            <p className="text-xs text-muted-foreground">未入力の場合は「名前未登録」と表示されます。</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
