@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Loader2, LogOut, ScanQrCode, ToggleLeft, UserPen, User, Sparkle } from "lucide-react";
@@ -185,6 +185,7 @@ export default function Home() {
   const [isQRDrawerOpen, setQRDrawerOpen] = useState(false)
   const [isProfileDrawerOpen, setProfileDrawerOpen] = useState(false)
   const [isLogoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [isLogoutProcessing, setLogoutProcessing] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -203,6 +204,25 @@ export default function Home() {
     name: "",
     image: "",
   })
+  const isForcingInactiveRef = useRef(false)
+
+  const forceDeactivateMaid = useCallback(async (options?: { onError?: (message: string) => void }) => {
+    if (!credentials) return false
+    if (isForcingInactiveRef.current) return true
+    isForcingInactiveRef.current = true
+    try {
+      const updated = await updateMaidActiveStatus(credentials, { is_active: false })
+      setMaidProfile(updated)
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '稼働状態の更新に失敗しました。'
+      console.error('Failed to set maid inactive state automatically', error)
+      options?.onError?.(message)
+      return false
+    } finally {
+      isForcingInactiveRef.current = false
+    }
+  }, [credentials])
 
   const showAlert = useCallback((title: string, message: string) => {
     setAlertTitle(title)
@@ -228,6 +248,7 @@ export default function Home() {
         const profile = await fetchMaidProfile(credentials)
         if (cancelled) return
         if (!profile) {
+          await forceDeactivateMaid()
           showAlert('エラー', '情報が見つかりません。再度ログインをしてください。')
           router.replace(`/maid/login?id=${encodeURIComponent(credentials.id)}&key=${encodeURIComponent(credentials.apiKey)}`)
           return
@@ -235,6 +256,7 @@ export default function Home() {
         setMaidProfile(profile)
       } catch (error) {
         if (cancelled) return
+        await forceDeactivateMaid()
         const message = error instanceof Error ? error.message : '情報の取得に失敗しました。'
         showAlert('エラー', message)
       } finally {
@@ -247,7 +269,7 @@ export default function Home() {
     return () => {
       cancelled = true
     }
-  }, [credentials, router, showAlert])
+  }, [credentials, forceDeactivateMaid, router, showAlert])
 
   useEffect(() => {
     if (!maidProfile) return
@@ -427,7 +449,23 @@ export default function Home() {
     }
   }
 
-  const handleLogoutConfirm = () => {
+  const handleLogoutConfirm = async () => {
+    if (isLogoutProcessing) return
+
+    if (credentials) {
+      setLogoutProcessing(true)
+      const success = await forceDeactivateMaid({
+        onError: (message) => {
+          showAlert('エラー', `ログアウト前に稼働状態を休止に変更できませんでした。${message}`)
+        },
+      })
+      setLogoutProcessing(false)
+      if (!success) {
+        setLogoutConfirmOpen(true)
+        return
+      }
+    }
+
     clearMaidCredentials()
     setCredentials(null)
     setMaidProfile(null)
