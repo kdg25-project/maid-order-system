@@ -4,12 +4,6 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-export interface ErrorResponse {
-  success: false;
-  message: string;
-  details?: unknown;
-}
-
 export interface GetMaidsQueryParams {
   page?: number;
   per_page?: number;
