@@ -1,5 +1,6 @@
 import { easyFetch } from "@/lib/easyFetch";
 import { loadMaidCredentials } from "@/lib/maid-auth";
+import type { ApiResponse, Menu, MenusListResponse } from "@/app/types";
 
 // Helper function to get API key from cookie
 function getApiKey(providedKey?: string): string | undefined {
@@ -7,26 +8,6 @@ function getApiKey(providedKey?: string): string | undefined {
   const credentials = loadMaidCredentials();
   return credentials?.apiKey;
 }
-
-// Types
-export type Menu = {
-  id: number;
-  name: string;
-  stock: number;
-  image_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
-export type MenusListResponse = {
-  menus: Menu[];
-};
 
 // API Functions
 
@@ -60,7 +41,11 @@ export async function updateMenu(
   apiKey?: string,
 ) {
   const key = getApiKey(apiKey);
-  return easyFetch<ApiResponse<Menu>, "PATCH", { name?: string; stock?: number }>({
+  return easyFetch<
+    ApiResponse<Menu>,
+    "PATCH",
+    { name?: string; stock?: number }
+  >({
     endpoint: `/api/menus/${id}`,
     method: "PATCH",
     body: data,

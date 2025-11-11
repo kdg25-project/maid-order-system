@@ -1,5 +1,5 @@
 export interface ApiResponse<T> {
-  success: true;
+  success: boolean;
   message: string;
   data: T;
 }
@@ -36,6 +36,12 @@ export interface CreateMaidRequest {
   is_instax_available?: boolean;
 }
 
+export interface PaginatedMaidsResponse {
+  success: boolean;
+  message: string;
+  data: Maid[];
+}
+
 export interface UpdateMaidRequest {
   name?: string;
   is_instax_available?: boolean;
@@ -58,6 +64,10 @@ export type MenusApiResponse = ApiResponse<{
   menus: Menu[];
 }>;
 
+export type MenusListResponse = {
+  menus: Menu[];
+};
+
 export type MenuApiResponse = ApiResponse<Menu>;
 
 export interface UpdateMenuRequest {
@@ -71,6 +81,7 @@ export interface User {
   status: string | null;
   maid_id: string | null;
   instax_maid_id: string | null;
+  instax_id: number | null;
   seat_id: number | null;
   is_valid: boolean;
   created_at: string;
@@ -78,6 +89,7 @@ export interface User {
 }
 
 export type UserApiResponse = ApiResponse<User>;
+
 export type MaidUsersApiResponse = ApiResponse<{
   users: User[];
 }>;
@@ -112,6 +124,10 @@ export type OrdersApiResponse = ApiResponse<{
   orders: Order[];
 }>;
 
+export type OrdersListResponse = {
+  orders: Order[];
+};
+
 export type OrderApiResponse = ApiResponse<Order>;
 
 export interface CreateOrderRequest {
@@ -143,3 +159,25 @@ export interface InstaxHistory {
 }
 
 export type InstaxHistoryApiResponse = ApiResponse<InstaxHistory[]>;
+
+export type UserEngagementState = "serving" | "leaving";
+
+export interface AssignedUser {
+  id: string;
+  name: string | null;
+  status: string | null;
+  maid_id: string | null;
+  instax_maid_id: string | null;
+  instax_id: number | null;
+  seat_id: number | null;
+  is_valid: boolean;
+  created_at: string;
+  updated_at: string;
+  engagement_state: UserEngagementState;
+}
+
+export interface AssignedUsersResponse {
+  maid_id: string;
+  status_filter: "serving" | "leaving" | "both";
+  users: AssignedUser[];
+}
