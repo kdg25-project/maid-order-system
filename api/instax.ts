@@ -1,5 +1,6 @@
 import { easyFetch } from "@/lib/easyFetch";
 import { loadMaidCredentials } from "@/lib/maid-auth";
+import type { ApiResponse, Instax, InstaxHistory } from "@/app/types";
 
 // Helper function to get API key from cookie
 function getApiKey(providedKey?: string): string | undefined {
@@ -7,30 +8,6 @@ function getApiKey(providedKey?: string): string | undefined {
   const credentials = loadMaidCredentials();
   return credentials?.apiKey;
 }
-
-// Types
-export type Instax = {
-  id: number;
-  user_id: string;
-  maid_id: string;
-  image_url: string | null;
-  created_at: string;
-};
-
-export type InstaxHistory = {
-  id: number;
-  instax_id: number;
-  user_id: string;
-  maid_id: string;
-  image_url: string;
-  archived_at: string;
-};
-
-export type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 // API Functions
 

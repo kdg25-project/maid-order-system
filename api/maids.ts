@@ -1,5 +1,11 @@
 import { easyFetch } from "@/lib/easyFetch";
 import { loadMaidCredentials } from "@/lib/maid-auth";
+import type {
+  ApiResponse,
+  AssignedUsersResponse,
+  Maid,
+  PaginatedMaidsResponse,
+} from "@/app/types";
 
 // Helper function to get API key from cookie
 function getApiKey(providedKey?: string): string | undefined {
@@ -7,48 +13,6 @@ function getApiKey(providedKey?: string): string | undefined {
   const credentials = loadMaidCredentials();
   return credentials?.apiKey;
 }
-
-// Types
-export type Maid = {
-  id: string;
-  name: string;
-  image_url: string | null;
-  is_instax_available: boolean;
-};
-
-export type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
-export type PaginatedMaidsResponse = {
-  success: boolean;
-  message: string;
-  data: Maid[];
-};
-
-export type UserEngagementState = "serving" | "leaving";
-
-export type AssignedUser = {
-  id: string;
-  name: string | null;
-  status: string | null;
-  maid_id: string | null;
-  instax_maid_id: string | null;
-  instax_id: number | null;
-  seat_id: number | null;
-  is_valid: boolean;
-  created_at: string;
-  updated_at: string;
-  engagement_state: UserEngagementState;
-};
-
-export type AssignedUsersResponse = {
-  maid_id: string;
-  status_filter: "serving" | "leaving" | "both";
-  users: AssignedUser[];
-};
 
 // API Functions
 
@@ -86,7 +50,11 @@ export async function createMaid(
   apiKey?: string,
 ) {
   const key = getApiKey(apiKey);
-  return easyFetch<ApiResponse<Maid>, "POST", { is_instax_available?: boolean }>({
+  return easyFetch<
+    ApiResponse<Maid>,
+    "POST",
+    { is_instax_available?: boolean }
+  >({
     endpoint: `/api/maids/${id}`,
     method: "POST",
     body: data,
@@ -103,7 +71,11 @@ export async function updateMaid(
   apiKey?: string,
 ) {
   const key = getApiKey(apiKey);
-  return easyFetch<ApiResponse<Maid>, "PATCH", { name?: string; is_instax_available?: boolean }>({
+  return easyFetch<
+    ApiResponse<Maid>,
+    "PATCH",
+    { name?: string; is_instax_available?: boolean }
+  >({
     endpoint: `/api/maids/${id}`,
     method: "PATCH",
     body: data,

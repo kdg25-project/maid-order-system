@@ -1,5 +1,6 @@
 import { easyFetch } from "@/lib/easyFetch";
 import { loadMaidCredentials } from "@/lib/maid-auth";
+import type { ApiResponse, User } from "@/app/types";
 
 // Helper function to get API key from cookie
 function getApiKey(providedKey?: string): string | undefined {
@@ -7,26 +8,6 @@ function getApiKey(providedKey?: string): string | undefined {
   const credentials = loadMaidCredentials();
   return credentials?.apiKey;
 }
-
-// Types
-export type User = {
-  id: string;
-  name: string | null;
-  status: string | null;
-  maid_id: string | null;
-  instax_maid_id: string | null;
-  instax_id: number | null;
-  seat_id: number | null;
-  is_valid: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 // API Functions
 
@@ -63,7 +44,11 @@ export async function registerUser(
     status?: string;
   },
 ) {
-  return easyFetch<ApiResponse<User>, "POST", { seat_id: number; maid_id: string; status?: string }>({
+  return easyFetch<
+    ApiResponse<User>,
+    "POST",
+    { seat_id: number; maid_id: string; status?: string }
+  >({
     endpoint: `/api/users/${id}`,
     method: "POST",
     body: data,
@@ -84,14 +69,18 @@ export async function updateUser(
     is_valid?: boolean;
   },
 ) {
-  return easyFetch<ApiResponse<User>, "PATCH", {
-    name?: string;
-    status?: string;
-    maid_id?: string;
-    instax_maid_id?: string | null;
-    seat_id?: number;
-    is_valid?: boolean;
-  }>({
+  return easyFetch<
+    ApiResponse<User>,
+    "PATCH",
+    {
+      name?: string;
+      status?: string;
+      maid_id?: string;
+      instax_maid_id?: string | null;
+      seat_id?: number;
+      is_valid?: boolean;
+    }
+  >({
     endpoint: `/api/users/${id}`,
     method: "PATCH",
     body: data,

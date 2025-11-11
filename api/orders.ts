@@ -1,26 +1,10 @@
 import { easyFetch } from "@/lib/easyFetch";
-
-// Types
-export type OrderState = "pending" | "preparing" | "served";
-
-export type Order = {
-  id: number;
-  user_id: string;
-  menu_id: number;
-  state: OrderState;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
-export type OrdersListResponse = {
-  orders: Order[];
-};
+import type {
+  ApiResponse,
+  Order,
+  OrderState,
+  OrdersListResponse,
+} from "@/app/types";
 
 // API Functions
 
@@ -58,7 +42,11 @@ export async function getOrdersByUserId(userId: string) {
  * 注文を作成
  */
 export async function createOrder(data: { user_id: string; menu_id: number }) {
-  return easyFetch<ApiResponse<Order>, "POST", { user_id: string; menu_id: number }>({
+  return easyFetch<
+    ApiResponse<Order>,
+    "POST",
+    { user_id: string; menu_id: number }
+  >({
     endpoint: "/api/orders",
     method: "POST",
     body: data,
