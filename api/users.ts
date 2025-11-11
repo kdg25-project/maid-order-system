@@ -1,4 +1,12 @@
 import { easyFetch } from "@/lib/easyFetch";
+import { loadMaidCredentials } from "@/lib/maid-auth";
+
+// Helper function to get API key from cookie
+function getApiKey(providedKey?: string): string | undefined {
+  if (providedKey) return providedKey;
+  const credentials = loadMaidCredentials();
+  return credentials?.apiKey;
+}
 
 // Types
 export type User = {
@@ -36,10 +44,11 @@ export async function getUserById(id: string) {
  * 座席IDでユーザーを取得
  */
 export async function getUserBySeatId(seatId: number, apiKey?: string) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<User>>({
     endpoint: `/api/users/seat/${seatId}`,
     method: "GET",
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 

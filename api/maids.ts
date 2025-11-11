@@ -1,4 +1,12 @@
 import { easyFetch } from "@/lib/easyFetch";
+import { loadMaidCredentials } from "@/lib/maid-auth";
+
+// Helper function to get API key from cookie
+function getApiKey(providedKey?: string): string | undefined {
+  if (providedKey) return providedKey;
+  const credentials = loadMaidCredentials();
+  return credentials?.apiKey;
+}
 
 // Types
 export type Maid = {
@@ -77,11 +85,12 @@ export async function createMaid(
   data?: { is_instax_available?: boolean },
   apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Maid>, "POST", { is_instax_available?: boolean }>({
     endpoint: `/api/maids/${id}`,
     method: "POST",
     body: data,
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 
@@ -93,11 +102,12 @@ export async function updateMaid(
   data: { name?: string; is_instax_available?: boolean },
   apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Maid>, "PATCH", { name?: string; is_instax_available?: boolean }>({
     endpoint: `/api/maids/${id}`,
     method: "PATCH",
     body: data,
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 
@@ -105,10 +115,11 @@ export async function updateMaid(
  * メイドを削除
  */
 export async function deleteMaid(id: string, apiKey?: string) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Maid>, "DELETE">({
     endpoint: `/api/maids/${id}`,
     method: "DELETE",
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 
@@ -120,11 +131,12 @@ export async function toggleMaidActive(
   is_active: boolean,
   apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Maid>, "PATCH", { is_active: boolean }>({
     endpoint: `/api/maids/${id}/active`,
     method: "PATCH",
     body: { is_active },
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 
@@ -136,10 +148,11 @@ export async function getMaidAssignedUsers(
   params?: { status?: "serving" | "leaving" | "both" },
   apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<AssignedUsersResponse>>({
     endpoint: `/api/maids/${id}/users`,
     method: "GET",
     query: params,
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }

@@ -1,4 +1,12 @@
 import { easyFetch } from "@/lib/easyFetch";
+import { loadMaidCredentials } from "@/lib/maid-auth";
+
+// Helper function to get API key from cookie
+function getApiKey(providedKey?: string): string | undefined {
+  if (providedKey) return providedKey;
+  const credentials = loadMaidCredentials();
+  return credentials?.apiKey;
+}
 
 // Types
 export type Menu = {
@@ -51,11 +59,12 @@ export async function updateMenu(
   data: { name?: string; stock?: number },
   apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Menu>, "PATCH", { name?: string; stock?: number }>({
     endpoint: `/api/menus/${id}`,
     method: "PATCH",
     body: data,
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
 
@@ -63,9 +72,10 @@ export async function updateMenu(
  * メニューを削除
  */
 export async function deleteMenu(id: number, apiKey?: string) {
+  const key = getApiKey(apiKey);
   return easyFetch<ApiResponse<Menu>, "DELETE">({
     endpoint: `/api/menus/${id}`,
     method: "DELETE",
-    headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
