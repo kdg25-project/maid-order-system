@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Menu } from "@/api/menus"; 
+import { Menu } from "@/app/types"; 
 
 type Props = {
   item: Menu[];

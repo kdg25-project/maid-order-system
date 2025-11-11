@@ -1,8 +1,9 @@
 "use client";
 
 import { OrderTable } from "@/components/order";
-import { Menu, MenusListResponse } from "@/api/menus"; 
+import { getMenus} from "@/api/menus"; 
 import { useState, useEffect } from "react";
+import { type Menu } from "@/app/types";
 
 function Page() {
 
@@ -17,22 +18,8 @@ function Page() {
         setError(null);
 
         try {
-          const apiUrl = "/api/menus"; 
-          const response = await fetch(apiUrl);
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`APIエラー ステータス: ${response.status}`, errorText);
-              throw new Error(`メニューデータの取得に失敗しました (Status: ${response.status})`);
-            }
-            
-            
-            const result: { data: MenusListResponse } = await response.json(); 
-            
-            
-            const data: Menu[] = result.data.menus; 
-            
-            setMenus(data);
+            const response = await getMenus({ available_only: true });
+            setMenus(response.data.data.menus);
             
           } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : "不明なエラー";
@@ -44,8 +31,6 @@ function Page() {
       };
     fetchMenus();
     }, []);
-
-const dataToShow = menus;
 
     return (
 
@@ -74,7 +59,7 @@ const dataToShow = menus;
                   )}
                   {!isLoading && !error && (
                       <div className="mt-8">
-                      <OrderTable item={dataToShow} />
+                      <OrderTable item={menus} />
                         </div>
                       )}
                 </div>
