@@ -24,7 +24,7 @@ export interface Maid {
   id: string;
   name: string;
   image_url: string | null;
-  is_instax_available: boolean; 
+  is_instax_available: boolean;
   is_active: boolean;
 }
 
@@ -97,7 +97,7 @@ export interface UpdateUserRequest {
   is_valid?: boolean;
 }
 
-export type OrderState = 'pending' | 'preparing' | 'served';
+export type OrderState = "pending" | "preparing" | "served";
 
 export interface Order {
   id: number;

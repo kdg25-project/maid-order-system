@@ -1,4 +1,12 @@
-import { Maid, MaidApiResponse, MaidUsersApiResponse, UpdateMaidActiveRequest, UpdateUserRequest, User, UserApiResponse } from "@/app/maid/types";
+import {
+  Maid,
+  MaidApiResponse,
+  MaidUsersApiResponse,
+  UpdateMaidActiveRequest,
+  UpdateUserRequest,
+  User,
+  UserApiResponse,
+} from "@/app/types";
 
 export interface MaidCredentials {
   id: string;
@@ -24,7 +32,11 @@ const readCookie = (name: string): string | null => {
   return null;
 };
 
-const writeCookie = (name: string, value: string, options?: { maxAgeSeconds?: number }) => {
+const writeCookie = (
+  name: string,
+  value: string,
+  options?: { maxAgeSeconds?: number },
+) => {
   if (!isBrowser || typeof document === "undefined") return;
   const attributes = [
     `${name}=${value}`,
@@ -70,7 +82,9 @@ type SearchParamsLike = {
   get: (name: string) => string | null;
 };
 
-export function credentialsFromSearchParams(params: SearchParamsLike): MaidCredentials | null {
+export function credentialsFromSearchParams(
+  params: SearchParamsLike,
+): MaidCredentials | null {
   const id = params.get("id")?.trim();
   const key = params.get("key")?.trim();
   if (!id || !key) return null;
@@ -92,7 +106,10 @@ export function credentialsFromUrl(raw: string): MaidCredentials | null {
   }
 }
 
-const buildAuthHeaders = (credentials: MaidCredentials, extra?: HeadersInit): HeadersInit => {
+const buildAuthHeaders = (
+  credentials: MaidCredentials,
+  extra?: HeadersInit,
+): HeadersInit => {
   return {
     "x-api-key": credentials.apiKey,
     ...(extra ?? {}),
@@ -103,7 +120,9 @@ const apiUrl = (path: string) => {
   return `${API_BASE_URL}${path}`;
 };
 
-export async function fetchMaidProfile(credentials: MaidCredentials): Promise<Maid | null> {
+export async function fetchMaidProfile(
+  credentials: MaidCredentials,
+): Promise<Maid | null> {
   const response = await fetch(apiUrl(`/maids/${credentials.id}`), {
     method: "GET",
     headers: buildAuthHeaders(credentials),
@@ -114,7 +133,9 @@ export async function fetchMaidProfile(credentials: MaidCredentials): Promise<Ma
   }
 
   if (!response.ok) {
-    throw new Error(`メイド情報の取得に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `メイド情報の取得に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: MaidApiResponse = await response.json();
@@ -128,7 +149,9 @@ export async function createMaid(credentials: MaidCredentials): Promise<Maid> {
   });
 
   if (!response.ok) {
-    throw new Error(`メイドの初期登録に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `メイドの初期登録に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: MaidApiResponse = await response.json();
@@ -137,7 +160,7 @@ export async function createMaid(credentials: MaidCredentials): Promise<Maid> {
 
 export async function updateMaidProfile(
   credentials: MaidCredentials,
-  payload: { name?: string; image?: Blob | File | null }
+  payload: { name?: string; image?: Blob | File | null },
 ): Promise<Maid> {
   const formData = new FormData();
   if (payload.name !== undefined) {
@@ -154,7 +177,9 @@ export async function updateMaidProfile(
   });
 
   if (!response.ok) {
-    throw new Error(`メイドプロフィールの更新に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `メイドプロフィールの更新に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: MaidApiResponse = await response.json();
@@ -163,23 +188,29 @@ export async function updateMaidProfile(
 
 export async function updateMaidActiveStatus(
   credentials: MaidCredentials,
-  payload: UpdateMaidActiveRequest
+  payload: UpdateMaidActiveRequest,
 ): Promise<Maid> {
   const response = await fetch(apiUrl(`/maids/${credentials.id}/active`), {
     method: "PATCH",
-    headers: buildAuthHeaders(credentials, { "Content-Type": "application/json" }),
+    headers: buildAuthHeaders(credentials, {
+      "Content-Type": "application/json",
+    }),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error(`稼働状態の更新に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `稼働状態の更新に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: MaidApiResponse = await response.json();
   return data.data;
 }
 
-export async function fetchAssignedUsers(credentials: MaidCredentials): Promise<User[]> {
+export async function fetchAssignedUsers(
+  credentials: MaidCredentials,
+): Promise<User[]> {
   const response = await fetch(apiUrl(`/maids/${credentials.id}/users`), {
     method: "GET",
     headers: buildAuthHeaders(credentials),
@@ -190,7 +221,9 @@ export async function fetchAssignedUsers(credentials: MaidCredentials): Promise<
   }
 
   if (!response.ok) {
-    throw new Error(`割り当てユーザーの取得に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `割り当てユーザーの取得に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: MaidUsersApiResponse = await response.json();
@@ -200,16 +233,20 @@ export async function fetchAssignedUsers(credentials: MaidCredentials): Promise<
 export async function updateUserInfo(
   credentials: MaidCredentials,
   userId: string,
-  payload: UpdateUserRequest
+  payload: UpdateUserRequest,
 ): Promise<User> {
   const response = await fetch(apiUrl(`/users/${userId}`), {
     method: "PATCH",
-    headers: buildAuthHeaders(credentials, { "Content-Type": "application/json" }),
+    headers: buildAuthHeaders(credentials, {
+      "Content-Type": "application/json",
+    }),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error(`ユーザー情報の更新に失敗しました (status: ${response.status}).`);
+    throw new Error(
+      `ユーザー情報の更新に失敗しました (status: ${response.status}).`,
+    );
   }
 
   const data: UserApiResponse = await response.json();
