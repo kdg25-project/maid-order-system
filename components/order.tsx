@@ -1,27 +1,21 @@
 import React, { useState } from 'react';
-
 import { useRouter } from 'next/navigation';
 
-type Item = {
-  name: string;
-  id: number;
-  stock: number;
-  image: string;
-};
+import { Menu } from "@/api/menus"; 
 
 type Props = {
-  item: Item[];
+  item: Menu[];
 };
 
 export function OrderTable({ item }: Props) {
   const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Menu | null>(null);
 
   const [confirmedOrderName, setConfirmedOrderName] = useState('');
 
-  const handleItemSelect = (product: Item) => {
+  const handleItemSelect = (product: Menu) => {
     setSelectedItem(product);
     setIsModalOpen(true);
   };
@@ -45,10 +39,9 @@ export function OrderTable({ item }: Props) {
 
     if (confirmedOrderName) {
 
-      router.push('/order_conf');
+      router.push('order/success');
     }
   };
-
 
   const isOrderConfirmed = !!confirmedOrderName;
 
@@ -61,13 +54,13 @@ export function OrderTable({ item }: Props) {
 
             <h3 className="text-lg font-semibold text-gray-800 truncate">
             </h3>
-            <img src={product.image} alt={product.name} className="px-4 py-2 justify-center items-center mx-auto" />
+            <img src={product.image_url ?? ''} alt={product.name} className="px-4 py-2 justify-center items-center mx-auto" />
 
             <h3 className="text-xl item-center w-fit mx-auto font-bold">{product.name}</h3>
 
             <button
               onClick={() => handleItemSelect(product)}
-              className="mt-3 w-full bg-yellow-500 fontcolor:black py-1 rounded-full hover:bg-yellow-600 transition">
+              className="mt-3 w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition">
               これにする?
             </button>
           </div>
@@ -81,7 +74,7 @@ export function OrderTable({ item }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full mb-4">
-              <img src={selectedItem.image} alt={selectedItem.name}
+              <img src={selectedItem.image_url ?? ''} alt={selectedItem.name}
                 className="w-full max-h-48 object-contain block mx-auto" />
             </div>
 
@@ -115,16 +108,20 @@ export function OrderTable({ item }: Props) {
 
             {confirmedOrderName || "注文したドリンク名"}
           </div>
+          <div className="flex flex-col space-y-2 px-4">
+
+          </div>
           <button
             onClick={handleOpenOrderCheckModal}
 
             disabled={!isOrderConfirmed}
 
             className={`
-              fontcolor:black px-3 py-1 rounded-full transition whitespace-nowrap p-4
+              /* 💡 修正点: 無効なCSSクラス 'fontcolor:black' を削除 */
+              px-3 py-1 rounded-full transition whitespace-nowrap p-4
               ${isOrderConfirmed
-                ? 'bg-yellow-500 hover:bg-yellow-600'
-                : 'bg-yellow-500 hover:bg-yellow-600 cursor-not-allowed'}
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                : 'bg-gray-400 cursor-not-allowed text-gray-700'}
             `}
           >
             ご注文確認

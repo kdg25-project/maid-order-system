@@ -23,7 +23,7 @@ function Page() {
           <img
             src={"/maid_illust.png"}
             alt={"maid_illust"}
-            className="w-150 max-w-xs h-170 mx-auto"
+            className="max-w-xs mx-auto"
             />
         </div>
       </div>

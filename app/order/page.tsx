@@ -1,40 +1,85 @@
 "use client";
 
-import {OrderTable} from "@/components/order";
-import {useState} from "react";
+import { OrderTable } from "@/components/order";
+import { Menu, MenusListResponse } from "@/api/menus"; 
+import { useState, useEffect } from "react";
 
 function Page() {
-  const products = [
-    {id:1, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:2, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:3, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:4, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:5, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:6, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:7, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-    {id:8, name:"キラキラ輝く美味しいコーラ", image:"/cocacola.png", stock: 10},
-  ];
-  return (
-    <div>
-    <div className="min-h-screen p-4 rounded-lg shadow-xl
-            bg-gradient-to-tr
-            from-[#FBAFB7]
-            via-[#E7D1D9]
-            to-[#A8EAEF]">
-      <div className="bg-[#ffa9a9]/80 backdrop-blur-sm
+
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  
+  useEffect(() => {
+      const fetchMenus = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+          const apiUrl = "/api/menus"; 
+          const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`APIエラー ステータス: ${response.status}`, errorText);
+              throw new Error(`メニューデータの取得に失敗しました (Status: ${response.status})`);
+            }
+            
+            
+            const result: { data: MenusListResponse } = await response.json(); 
+            
+            
+            const data: Menu[] = result.data.menus; 
+            
+            setMenus(data);
+            
+          } catch (e) {
+                const errorMessage = e instanceof Error ? e.message : "不明なエラー";
+                console.error("致命的なエラー:", e);
+                setError(errorMessage);
+            } finally {
+          setIsLoading(false);
+            }
+      };
+    fetchMenus();
+    }, []);
+
+const dataToShow = menus;
+
+    return (
+
+      <div>
+      <div className="min-h-screen p-4 rounded-lg shadow-xl
+              bg-gradient-to-tr
+              from-[#FBAFB7]
+              via-[#E7D1D9]
+              to-[#A8EAEF]">
+          <div className="bg-[#ffa9a9]/80 backdrop-blur-sm
             px-4 py-1 rounded-full
             flex justify-center items-center
             w-fit mx-auto mb-8">
-        <h2 className="text-xl text-white font-bold">注文リスト</h2>
-      </div>
-      <div className="px-4 py-1 justify-center items-center w-fit mx-auto">
-        <h2 className="text-4xl font-bold">ドリンク</h2>
-      </div>
-      <OrderTable item={products} />
-      </div>
+                <h2 className="text-xl text-white font-bold">注文リスト</h2>
+                        </div>
+                {isLoading && (
+                    <div className="text-center text-gray-700 mt-8">
+                        データを読み込み中...
+                    </div>
+                )}
 
-    </div>
-  );
+                  {error && (
+                      <div className="text-center text-red-600 font-bold mt-8 p-4 bg-red-100 rounded-lg mx-auto w-fit">
+                        エラーが発生しました: {error}
+                      </div>
+                  )}
+                  {!isLoading && !error && (
+                      <div className="mt-8">
+                      <OrderTable item={dataToShow} />
+                        </div>
+                      )}
+                </div>
+            </div>
+    );
 }
 
 export default Page;
