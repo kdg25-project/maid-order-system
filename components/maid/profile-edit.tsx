@@ -31,14 +31,14 @@ export function ProfileEdit({ open, onOpenChange, form, onFormChange, onSave }: 
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setSrcImage(reader.result as string)
-        setShowCropper(true)
-      }
-      reader.readAsDataURL(file)
+        setSrcImage(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
     }
     e.target.value = "";
   }
