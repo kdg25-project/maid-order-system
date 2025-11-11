@@ -14,13 +14,12 @@ type Props = {
 };
 
 export function OrderTable({ item }: Props) {
-
   const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [orderInput, setOrderInput] = useState('');
 
+  const [confirmedOrderName, setConfirmedOrderName] = useState('');
 
   const handleItemSelect = (product: Item) => {
     setSelectedItem(product);
@@ -34,19 +33,24 @@ export function OrderTable({ item }: Props) {
 
   const handleConfirmOrder = () => {
     if (selectedItem) {
-      console.log(`${selectedItem.name} が注文に追加されました。`);
+      console.log(`注文確定: ${selectedItem.name}`);
 
-      setOrderInput(selectedItem.name);
+
+      setConfirmedOrderName(selectedItem.name);
     }
     handleCloseModal();
   };
 
   const handleOpenOrderCheckModal = () => {
 
-    router.push('/order_conf');
+    if (confirmedOrderName) {
+
+      router.push('/order_conf');
+    }
   };
 
 
+  const isOrderConfirmed = !!confirmedOrderName;
 
   return (
     <div>
@@ -73,33 +77,21 @@ export function OrderTable({ item }: Props) {
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 bg-gray-900/70 flex items-center justify-center p-4" onClick={handleCloseModal}>
           <div
-
             className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
-
-
             <div className="w-full mb-4">
               <img src={selectedItem.image} alt={selectedItem.name}
-                className="w-full max-h-48 object-contain block mx-auto"/>
+                className="w-full max-h-48 object-contain block mx-auto" />
             </div>
 
             <div className="w-full">
-
-
               <h3 className="text-2xl font-bold mb-4 text-center">{selectedItem.name}</h3>
-
-
               <p className="mb-4 text-center">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
-
-
               <h4 className="text-sm font-extralight text-center mx-auto mb-4">*画像はイメージです</h4>
-
-
               <div className="flex flex-col space-y-2 px-4">
                 <button
                   onClick={handleConfirmOrder}
-
                   className="w-full bg-yellow-500 text-black font-semibold py-2 rounded-xl hover:bg-yellow-600">
                   これにする
                 </button>
@@ -109,7 +101,6 @@ export function OrderTable({ item }: Props) {
                   しない
                 </button>
               </div>
-
             </div>
           </div>
         </div>
@@ -117,16 +108,25 @@ export function OrderTable({ item }: Props) {
 
       <div className="bg-[#c7f0ff] p-6 rounded-lg shadow-md flex flex-col justify-between w-full mx-auto max-w-md h-full">
         <div className="flex space-space-x-2 items-center">
-          <input
-            type="text"
-            placeholder="注文したドリンク名"
-            value={orderInput}
-            onChange={(e) => setOrderInput(e.target.value)}
-            className="border border-white rounded-md bg-white px-2 py-1 flex-grow fontcolor:black font-bold p-4"
-          />
+
+          <div
+            className="border border-white rounded-md bg-white px-2 py-1 flex-grow font-bold p-4 text-gray-800"
+          >
+
+            {confirmedOrderName || "注文したドリンク名"}
+          </div>
           <button
             onClick={handleOpenOrderCheckModal}
-            className="bg-yellow-500 fontcolor:black px-3 py-1 rounded-full hover:bg-yellow-600 transition whitespace-nowrap p-4">
+
+            disabled={!isOrderConfirmed}
+
+            className={`
+              fontcolor:black px-3 py-1 rounded-full transition whitespace-nowrap p-4
+              ${isOrderConfirmed
+                ? 'bg-yellow-500 hover:bg-yellow-600'
+                : 'bg-yellow-500 hover:bg-yellow-600 cursor-not-allowed'}
+            `}
+          >
             ご注文確認
           </button>
         </div>

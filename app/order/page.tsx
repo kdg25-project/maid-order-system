@@ -1,7 +1,7 @@
 "use client";
 
 import {OrderTable} from "@/components/order";
-import {useState} from "react"; // useStateはPageコンポーネントでは使われていませんが、importは残しておきます
+import {useState} from "react";
 
 function Page() {
   const products = [
