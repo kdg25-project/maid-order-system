@@ -899,36 +899,41 @@ export default function Home() {
           open={isCameraOpen}
           onOpenChange={setCameraOpen}
           onError={(err) => showAlert("エラー", `カメラの起動に失敗しました: ${err.message}`)}
-          onConfirm={async (dataUrl) => {
+          onConfirm={(dataUrl) => {
             setCapturedInstaxDataUrl(dataUrl)
             setCameraOpen(false)
-            if (!pendingSeatId) {
-              setSeatInputOpen(true)
+            if (confirmUser) {
+              setConfirmOpen(true)
               return
             }
 
-            if (!credentials) {
-              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
-              router.replace("/maid/login")
-              return
-            }
-
-            try {
-              setInstaxProcessing(true)
-              const user = await fetchUserBySeat(credentials, pendingSeatId)
-              if (!user) {
-                showAlert("該当なし", `席番号 ${pendingSeatId} に割り当てられたユーザーが見つかりませんでした。`)
-                setCapturedInstaxDataUrl(null)
+            (async () => {
+              if (!pendingSeatId) {
+                setSeatInputOpen(true)
                 return
               }
-              setConfirmUser(user)
-              setConfirmOpen(true)
-            } catch (err) {
-              const e = err instanceof Error ? err : new Error(String(err))
-              showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
-            } finally {
-              setInstaxProcessing(false)
-            }
+              if (!credentials) {
+                showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
+                router.replace("/maid/login")
+                return
+              }
+              try {
+                setInstaxProcessing(true)
+                const user = await fetchUserBySeat(credentials, pendingSeatId)
+                if (!user) {
+                  showAlert("該当なし", `席番号 ${pendingSeatId} に割り当てられたユーザーが見つかりませんでした。`)
+                  setCapturedInstaxDataUrl(null)
+                  return
+                }
+                setConfirmUser(user)
+                setConfirmOpen(true)
+              } catch (err) {
+                const e = err instanceof Error ? err : new Error(String(err))
+                showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
+              } finally {
+                setInstaxProcessing(false)
+              }
+            })()
           }}
         />
 
@@ -938,12 +943,6 @@ export default function Home() {
           dataUrl={capturedInstaxDataUrl}
           onConfirm={async (seatId) => {
             setSeatInputOpen(false)
-            if (!capturedInstaxDataUrl) {
-              setPendingSeatId(seatId)
-              setCameraOpen(true)
-              return
-            }
-
             if (!credentials) {
               showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
               router.replace("/maid/login")
@@ -954,11 +953,11 @@ export default function Home() {
               const user = await fetchUserBySeat(credentials, seatId)
               if (!user) {
                 showAlert("該当なし", `席番号 ${seatId} に割り当てられたユーザーが見つかりませんでした。`)
-                setCapturedInstaxDataUrl(null)
                 setPendingSeatId(null)
                 return
               }
               setConfirmUser(user)
+              setPendingSeatId(seatId)
               setConfirmOpen(true)
             } catch (err) {
               const e = err instanceof Error ? err : new Error(String(err))
@@ -979,6 +978,10 @@ export default function Home() {
           onOpenChange={setConfirmOpen}
           user={confirmUser}
           dataUrl={capturedInstaxDataUrl}
+          onProceed={() => {
+            setConfirmOpen(false)
+            setCameraOpen(true)
+          }}
           onConfirm={async () => {
             if (!confirmUser?.seat_id) {
               showAlert("エラー", "ユーザーに席情報がありません。保存できません。")

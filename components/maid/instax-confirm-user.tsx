@@ -11,10 +11,11 @@ interface Props {
   user: User | null
   dataUrl: string | null
   onConfirm: () => void
+  onProceed?: () => void
   onCancel?: () => void
 }
 
-export function InstaxConfirmUser({ open, onOpenChange, user, dataUrl, onConfirm, onCancel }: Props) {
+export function InstaxConfirmUser({ open, onOpenChange, user, dataUrl, onConfirm, onProceed, onCancel }: Props) {
   const handleClose = () => {
     onOpenChange(false)
     onCancel?.()
@@ -43,10 +44,17 @@ export function InstaxConfirmUser({ open, onOpenChange, user, dataUrl, onConfirm
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleClose}>キャンセル</Button>
-            <Button onClick={() => {
-              onConfirm()
-              onOpenChange(false)
-            }}>ユーザーに紐づけて保存</Button>
+            {!dataUrl ? (
+              <Button onClick={() => {
+                onProceed?.()
+                onOpenChange(false)
+              }}>撮影へ進む</Button>
+            ) : (
+              <Button onClick={() => {
+                onConfirm()
+                onOpenChange(false)
+              }}>ユーザーに紐づけて保存</Button>
+            )}
           </div>
         </div>
       </DialogContent>
