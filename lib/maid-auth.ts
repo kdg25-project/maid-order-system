@@ -17,47 +17,11 @@ const STORAGE_KEY = "maid_auth";
 const API_BASE_URL = "https://api.kdgn.tech/api";
 
 const isBrowser = typeof window !== "undefined";
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 1 week
-
-const readCookie = (name: string): string | null => {
-  if (!isBrowser || typeof document === "undefined") return null;
-  const cookies = document.cookie ? document.cookie.split("; ") : [];
-  for (const cookie of cookies) {
-    if (!cookie) continue;
-    const [key, ...rest] = cookie.split("=");
-    if (key === name) {
-      return rest.join("=");
-    }
-  }
-  return null;
-};
-
-const writeCookie = (
-  name: string,
-  value: string,
-  options?: { maxAgeSeconds?: number },
-) => {
-  if (!isBrowser || typeof document === "undefined") return;
-  const attributes = [
-    `${name}=${value}`,
-    "path=/",
-    `max-age=${options?.maxAgeSeconds ?? COOKIE_MAX_AGE_SECONDS}`,
-    "SameSite=Lax",
-  ];
-  document.cookie = attributes.join("; ");
-};
-
-const deleteCookie = (name: string) => {
-  if (!isBrowser || typeof document === "undefined") return;
-  document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-};
 
 export function loadMaidCredentials(): MaidCredentials | null {
   if (!isBrowser) return null;
   try {
-    const cookieValue = readCookie(STORAGE_KEY);
-    if (!cookieValue) return null;
-    const raw = decodeURIComponent(cookieValue);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as MaidCredentials;
     if (!parsed.id || !parsed.apiKey) return null;
@@ -69,13 +33,12 @@ export function loadMaidCredentials(): MaidCredentials | null {
 
 export function saveMaidCredentials(credentials: MaidCredentials) {
   if (!isBrowser) return;
-  const encoded = encodeURIComponent(JSON.stringify(credentials));
-  writeCookie(STORAGE_KEY, encoded);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
 }
 
 export function clearMaidCredentials() {
   if (!isBrowser) return;
-  deleteCookie(STORAGE_KEY);
+  window.localStorage.removeItem(STORAGE_KEY);
 }
 
 type SearchParamsLike = {
