@@ -6,6 +6,8 @@ import {
   UpdateUserRequest,
   User,
   UserApiResponse,
+  Instax,
+  InstaxApiResponse,
 } from "@/app/types";
 
 export interface MaidCredentials {
@@ -219,6 +221,49 @@ export async function fetchAssignedUsers(
 
   const data: MaidUsersApiResponse = await response.json();
   return data.data.users;
+}
+
+export async function fetchUserBySeat(
+  credentials: MaidCredentials,
+  seatId: number,
+): Promise<User | null> {
+  const response = await fetch(apiUrl(`/users/seat/${seatId}`), {
+    method: "GET",
+    headers: buildAuthHeaders(credentials),
+  });
+
+  if (response.status === 404) return null;
+
+  if (!response.ok) {
+    throw new Error(`席情報からユーザーの取得に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: { success: boolean; message: string; data: User } = await response.json();
+  return data.data;
+}
+
+export async function postInstaxBySeat(
+  credentials: MaidCredentials,
+  seatId: number,
+  instaxFile: File,
+): Promise<Instax> {
+  const formData = new FormData()
+  formData.append("seat_id", String(seatId))
+  formData.append("maid_id", credentials.id)
+  formData.append("instax", instaxFile, instaxFile.name || "instax.jpg")
+
+  const response = await fetch(apiUrl(`/instax/by-seat`), {
+    method: "POST",
+    headers: buildAuthHeaders(credentials),
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error(`チェキの保存に失敗しました (status: ${response.status}).`)
+  }
+
+  const data: InstaxApiResponse = await response.json()
+  return data.data
 }
 
 export async function updateUserInfo(
