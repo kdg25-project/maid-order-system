@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 
 import { Menu } from "@/app/types"; 
 
+
 type Props = {
   item: Menu[];
 };
@@ -13,7 +14,7 @@ export function OrderTable({ item }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Menu | null>(null);
 
-  const [confirmedOrderName, setConfirmedOrderName] = useState('');
+  const [confirmedOrders, setConfirmedOrders] = useState<Menu[]>([]);
 
   const handleItemSelect = (product: Menu) => {
     setSelectedItem(product);
@@ -30,20 +31,21 @@ export function OrderTable({ item }: Props) {
       console.log(`注文確定: ${selectedItem.name}`);
 
 
-      setConfirmedOrderName(selectedItem.name);
+      setConfirmedOrders(prevOrders => [...prevOrders, selectedItem]);
     }
     handleCloseModal();
   };
 
   const handleOpenOrderCheckModal = () => {
 
-    if (confirmedOrderName) {
-
+    if (confirmedOrders.length > 0) {
       router.push('order/success');
     }
   };
 
-  const isOrderConfirmed = !!confirmedOrderName;
+  const isOrderConfirmed = confirmedOrders.length > 0;
+
+  const confirmedOrderNames = confirmedOrders.map(order => order.name).join('、');
 
   return (
     <div>
@@ -66,6 +68,7 @@ export function OrderTable({ item }: Props) {
           </div>
         ))}
       </div>
+
 
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 bg-gray-900/70 flex items-center justify-center p-4" onClick={handleCloseModal}>
@@ -100,13 +103,12 @@ export function OrderTable({ item }: Props) {
       )}
 
       <div className="bg-[#c7f0ff] p-6 rounded-lg shadow-md flex flex-col justify-between w-full mx-auto max-w-md h-full">
-        <div className="flex space-space-x-2 items-center">
+        <div className="flex space-x-2 items-center">
 
           <div
-            className="border border-white rounded-md bg-white px-2 py-1 flex-grow font-bold p-4 text-gray-800"
+            className="border border-white rounded-xl bg-white px-2 py-1 flex-grow font-bold p-4 text-gray-800"
           >
-
-            {confirmedOrderName || "注文したドリンク名"}
+            {confirmedOrderNames || "注文したドリンク名"}
           </div>
           <div className="flex flex-col space-y-2 px-4">
 
@@ -116,17 +118,19 @@ export function OrderTable({ item }: Props) {
 
             disabled={!isOrderConfirmed}
 
-            className={`
-              /* 💡 修正点: 無効なCSSクラス 'fontcolor:black' を削除 */
-              px-3 py-1 rounded-full transition whitespace-nowrap p-4
+            className={`px-3 py-1 rounded-full transition whitespace-nowrap p-4
               ${isOrderConfirmed
                 ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                : 'bg-gray-400 cursor-not-allowed text-gray-700'}
+                : 'bg-yellow-500 cursor-not-allowed text-gray-700'}
             `}
           >
             ご注文確認
           </button>
         </div>
+        {confirmedOrders.length > 0 && (
+          <p className="mt-2 text-sm text-gray-700 text-center">
+          </p>
+        )}
       </div>
     </div>
   );
