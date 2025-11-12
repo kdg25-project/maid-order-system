@@ -11,6 +11,7 @@ import {
   UserPen,
   User as UserIcon,
   Sparkle,
+  Camera,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -42,6 +43,11 @@ import {
 } from "@/lib/maid-auth";
 import { useForceMaidDeactivate } from "@/lib/force-maid-deactivate";
 import { cn } from "@/lib/utils";
+import { InstaxCamera } from "@/components/maid/instax-camera";
+import InstaxSeatInput from "@/components/maid/instax-seat-input";
+import InstaxConfirmUser from "@/components/maid/instax-confirm-user";
+import { fetchUserBySeat, postInstaxBySeat } from "@/lib/maid-auth";
+import InstaxSaved from "@/components/maid/instax-saved";
 
 const orderResponse = {
   success: true,
@@ -76,7 +82,12 @@ const orderResponse = {
   },
 };
 
-type QuickActionId = "workable_toggle" | "qrcode" | "edit_profile" | "logout";
+type QuickActionId =
+  | "workable_toggle"
+  | "qrcode"
+  | "edit_profile"
+  | "logout"
+  | "instax";
 
 type QuickAction = {
   id: QuickActionId;
@@ -89,6 +100,13 @@ type QuickAction = {
 };
 
 const staticQuickActions: QuickAction[] = [
+  {
+    id: "instax",
+    label: "チェキ撮影",
+    description: "チェキを撮影",
+    accent: "bg-sky-50 text-sky-600 border-sky-100",
+    icon: Camera,
+  },
   {
     id: "qrcode",
     label: "QRコード読み込み",
@@ -177,6 +195,7 @@ export default function Home() {
   const [isProfileLoading, setProfileLoading] = useState(true);
   const [isProfileSaving, setProfileSaving] = useState(false);
   const [isActiveUpdating, setActiveUpdating] = useState(false);
+  const [isInstaxProcessing, setInstaxProcessing] = useState(false);
   const [form, setForm] = useState<{
     name: string;
     seat_id: number;
@@ -196,6 +215,13 @@ export default function Home() {
   const [editingInitialMaidId, setEditingInitialMaidId] = useState<string>("");
   const [isMaidChangeConfirmOpen, setMaidChangeConfirmOpen] = useState(false);
   const forceDeactivateMaid = useForceMaidDeactivate(credentials);
+  const [isCameraOpen, setCameraOpen] = useState(false);
+  const [capturedInstaxDataUrl, setCapturedInstaxDataUrl] = useState<string | null>(null);
+  const [isSeatInputOpen, setSeatInputOpen] = useState(false);
+  const [isConfirmOpen, setConfirmOpen] = useState(false);
+  const [confirmUser, setConfirmUser] = useState<User | null>(null);
+  const [savedInstaxId, setSavedInstaxId] = useState<number | null>(null);
+  const [isSavedOpen, setSavedOpen] = useState(false);
 
   const closeEditor = () => {
     setDrawerOpen(false);
@@ -532,6 +558,8 @@ export default function Home() {
       setQRDrawerOpen(true);
     } else if (actionId === "edit_profile") {
       setProfileDrawerOpen(true);
+    } else if (actionId === "instax") {
+      setCameraOpen(true);
     } else if (actionId === "logout") {
       setLogoutConfirmOpen(true);
     }
@@ -596,9 +624,11 @@ export default function Home() {
         disabled: isProfileLoading || !maidProfile || isActiveUpdating,
         loading: isActiveUpdating,
       },
-      ...staticQuickActions,
+      ...staticQuickActions.map((a) =>
+        a.id === "instax" ? { ...a, loading: isInstaxProcessing } : a,
+      ),
     ];
-  }, [isActiveUpdating, isProfileLoading, maidProfile]);
+  }, [isActiveUpdating, isProfileLoading, maidProfile, isInstaxProcessing]);
 
   const getMaidName = (maidId: string) => {
     if (!maidId) return "未設定";
@@ -860,6 +890,99 @@ export default function Home() {
           open={isQRDrawerOpen}
           onOpenChange={setQRDrawerOpen}
           onScan={handleQRScan}
+        />
+
+        <InstaxCamera
+          open={isCameraOpen}
+          onOpenChange={setCameraOpen}
+          onError={(err) => showAlert("エラー", `カメラの起動に失敗しました: ${err.message}`)}
+          onConfirm={(dataUrl) => {
+            setCapturedInstaxDataUrl(dataUrl)
+            setCameraOpen(false)
+            setSeatInputOpen(true)
+          }}
+        />
+
+        <InstaxSeatInput
+          open={isSeatInputOpen}
+          onOpenChange={setSeatInputOpen}
+          dataUrl={capturedInstaxDataUrl}
+          onConfirm={async (seatId) => {
+            setSeatInputOpen(false)
+            if (!credentials) {
+              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
+              router.replace("/maid/login")
+              return
+            }
+            try {
+              setInstaxProcessing(true)
+              const user = await fetchUserBySeat(credentials, seatId)
+              if (!user) {
+                showAlert("該当なし", `席番号 ${seatId} に割り当てられたユーザーが見つかりませんでした。`)
+                setCapturedInstaxDataUrl(null)
+                return
+              }
+              setConfirmUser(user)
+              setConfirmOpen(true)
+            } catch (err) {
+              const e = err instanceof Error ? err : new Error(String(err))
+              showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
+            } finally {
+              setInstaxProcessing(false)
+            }
+          }}
+          onCancel={() => {
+            setCapturedInstaxDataUrl(null)
+            setSeatInputOpen(false)
+          }}
+        />
+
+        <InstaxConfirmUser
+          open={isConfirmOpen}
+          onOpenChange={setConfirmOpen}
+          user={confirmUser}
+          dataUrl={capturedInstaxDataUrl}
+          onConfirm={async () => {
+            if (!confirmUser?.seat_id) {
+              showAlert("エラー", "ユーザーに席情報がありません。保存できません。")
+              return
+            }
+            if (!credentials) {
+              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
+              router.replace("/maid/login")
+              return
+            }
+            const file = dataUrlToFile(capturedInstaxDataUrl ?? "", `instax-${Date.now()}.jpg`)
+            if (!file) {
+              showAlert("エラー", "画像データの変換に失敗しました。再撮影してください。")
+              return
+            }
+            try {
+              setInstaxProcessing(true)
+              const instax = await postInstaxBySeat(credentials, confirmUser.seat_id, file)
+              setSavedInstaxId(instax.id)
+              setSavedOpen(true)
+              setCapturedInstaxDataUrl(null)
+              setConfirmUser(null)
+              setConfirmOpen(false)
+              void reloadAssignedUsers()
+            } catch (err) {
+              const e = err instanceof Error ? err : new Error(String(err))
+              showAlert("保存エラー", `チェキの保存に失敗しました: ${e.message}`)
+            } finally {
+              setInstaxProcessing(false)
+            }
+          }}
+          onCancel={() => {
+            setCapturedInstaxDataUrl(null)
+          }}
+        />
+
+        <InstaxSaved
+          open={isSavedOpen}
+          onOpenChange={setSavedOpen}
+          instaxId={savedInstaxId}
+          onClose={() => setSavedInstaxId(null)}
         />
 
         <ProfileEdit
