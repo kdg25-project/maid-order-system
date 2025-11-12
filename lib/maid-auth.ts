@@ -41,6 +41,34 @@ export function clearMaidCredentials() {
   window.localStorage.removeItem(STORAGE_KEY);
 }
 
+
+export function loadMaidId(): string | null {
+  if (!isBrowser) return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<MaidCredentials> | null;
+    const id = parsed?.id?.toString().trim();
+    return id && id.length > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+
+export function loadMaidApiKey(): string | null {
+  if (!isBrowser) return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<MaidCredentials> | null;
+    const key = parsed?.apiKey?.toString().trim();
+    return key && key.length > 0 ? key : null;
+  } catch {
+    return null;
+  }
+}
+
 type SearchParamsLike = {
   get: (name: string) => string | null;
 };
