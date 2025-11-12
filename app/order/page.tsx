@@ -3,13 +3,13 @@
 import { OrderTable } from "@/components/order";
 import { getMenus} from "@/api/menus"; 
 import { useState, useEffect } from "react";
-import { type Menu } from "@/app/types";
+import { type Menu } from "../types";
 
 function Page() {
-
   const [menus, setMenus] = useState<Menu[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
 
   
   useEffect(() => {
@@ -28,6 +28,7 @@ function Page() {
             } finally {
           setIsLoading(false);
             }
+          revalidatePath('/posts')
       };
     fetchMenus();
     }, []);

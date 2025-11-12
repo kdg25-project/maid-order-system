@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { loadMaidCredentials } from "@/lib/maid-auth";
+import { easyFetch } from "@/lib/easyFetch";
 import { Menu } from "@/app/types"; 
+import Image from 'next/image';
 
 
 type Props = {
   item: Menu[];
 };
 
-export function OrderTable({ item }: Props) {
+export function OrderTable({item}: Props) {
   const router = useRouter();
+
+  
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Menu | null>(null);
@@ -49,20 +53,17 @@ export function OrderTable({ item }: Props) {
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-8">
+      <div className="grid grid-cols-2 gap-4 p-8">
         {item.slice(0, 8).map((product, index) => (
           <div key={product.id || index}
-            className="bg-white p-4 rounded-lg shadow-md hover:shadow-xl transition duration-300">
-
-            <h3 className="text-lg font-semibold text-gray-800 truncate">
-            </h3>
-            <img src={product.image_url ?? ''} alt={product.name} className="px-4 py-2 justify-center items-center mx-auto" />
+            className="bg-white p-4 rounded-lg shadow-md transition hover:bg-gray-100 duration-300 h-full">
+            <Image src={product.image_url ?? ''} alt={product.name} width={200} height={200} className="px-4 flex flex-col justify-between py-2 items-bottom h-auto w-auto mx-auto" />
 
             <h3 className="text-xl item-center w-fit mx-auto font-bold">{product.name}</h3>
 
             <button
               onClick={() => handleItemSelect(product)}
-              className="mt-3 w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition">
+              className="mt-3 w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition items-bottom">
               これにする?
             </button>
           </div>
@@ -77,8 +78,8 @@ export function OrderTable({ item }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full mb-4">
-              <img src={selectedItem.image_url ?? ''} alt={selectedItem.name}
-                className="w-full max-h-48 object-contain block mx-auto" />
+              <Image src={selectedItem.image_url ?? ''} alt={selectedItem.name} width={200} height={200}
+                className="w-full max-h-48 object-contain block mx-auto items-bottom" />
             </div>
 
             <div className="w-full">
