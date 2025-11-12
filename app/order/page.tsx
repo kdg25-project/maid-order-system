@@ -4,8 +4,8 @@ import { OrderTable } from "@/components/order";
 import { getMenus} from "@/api/menus"; 
 import { useState, useEffect } from "react";
 import { type Menu } from "../types";
-import svg from 'react-svg';
 import Image from 'next/image';
+import logoSrc from '@/public/logo.svg';
 
 function Page() {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -36,7 +36,9 @@ function Page() {
 
     return (
       <div>
-        <svg xmlns="http://www.w3.org/2000/svg" src="/logo.svg" className="w-16 h-16 mx-auto mb-8" />
+        <div className="mx-auto mt-8 w-32 h-auto">
+          <Image src={logoSrc} alt="logo" width={128} height={64} className="w-32 h-auto mx-auto" />
+        </div>
         <div className="min-h-screen p-4">
           <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
                 <h2 className="text-xl text-black font-bold fontsize-xl">ドリンク</h2>
