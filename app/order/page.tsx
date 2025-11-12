@@ -35,7 +35,7 @@ function Page() {
 
     return (
       <div>
-        <Image src="/logo_test01.svg.png" alt="Logo" width={300} height={300} className="mx-auto"/>
+        <Image src="/logo_test01.png" alt="Logo" width={300} height={300} className="mx-auto"/>
         <div className="min-h-screen p-4">
           <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
                 <h2 className="text-xl text-black font-bold fontsize-xl">ドリンク</h2>
