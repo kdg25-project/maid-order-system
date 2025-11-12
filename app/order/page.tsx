@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { type Menu } from "../types";
 import Image from 'next/image';
 import logoSrc from '@/public/logo.svg';
+import drinkSrc from '@/public/drink.svg';
 
 function Page() {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -41,7 +42,7 @@ function Page() {
         </div>
         <div className="min-h-screen p-4">
           <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
-                <h2 className="text-xl text-black font-bold fontsize-xl">ドリンク</h2>
+          <Image src={drinkSrc} alt="drink" width={128} height={64} className="w-32 h-auto mx-auto" />
           </div>
           {isLoading && (
               <div className="text-center text-gray-700 mt-8">
