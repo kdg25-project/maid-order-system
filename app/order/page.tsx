@@ -4,6 +4,7 @@ import { OrderTable } from "@/components/order";
 import { getMenus} from "@/api/menus"; 
 import { useState, useEffect } from "react";
 import { type Menu } from "../types";
+import Image from 'next/image';
 
 function Page() {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -28,16 +29,16 @@ function Page() {
             } finally {
           setIsLoading(false);
             }
-          revalidatePath('/posts')
       };
     fetchMenus();
     }, []);
 
     return (
       <div>
+        <Image src="/logo_test01.svg.png" alt="Logo" width={300} height={300} className="mx-auto"/>
         <div className="min-h-screen p-4">
-          <div className="px-4 py-1 rounded-full flex justify-center items-center w-fit mx-auto mb-8">
-                <h2 className="text-xl text-white font-bold">注文リスト</h2>
+          <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
+                <h2 className="text-xl text-black font-bold fontsize-xl">ドリンク</h2>
           </div>
           {isLoading && (
               <div className="text-center text-gray-700 mt-8">
