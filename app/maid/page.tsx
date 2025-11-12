@@ -218,6 +218,7 @@ export default function Home() {
   const [isCameraOpen, setCameraOpen] = useState(false);
   const [capturedInstaxDataUrl, setCapturedInstaxDataUrl] = useState<string | null>(null);
   const [isSeatInputOpen, setSeatInputOpen] = useState(false);
+  const [pendingSeatId, setPendingSeatId] = useState<number | null>(null);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   const [confirmUser, setConfirmUser] = useState<User | null>(null);
   const [savedInstaxId, setSavedInstaxId] = useState<number | null>(null);
@@ -559,7 +560,9 @@ export default function Home() {
     } else if (actionId === "edit_profile") {
       setProfileDrawerOpen(true);
     } else if (actionId === "instax") {
-      setCameraOpen(true);
+      setCapturedInstaxDataUrl(null)
+      setPendingSeatId(null)
+      setSeatInputOpen(true)
     } else if (actionId === "logout") {
       setLogoutConfirmOpen(true);
     }
@@ -896,10 +899,36 @@ export default function Home() {
           open={isCameraOpen}
           onOpenChange={setCameraOpen}
           onError={(err) => showAlert("エラー", `カメラの起動に失敗しました: ${err.message}`)}
-          onConfirm={(dataUrl) => {
+          onConfirm={async (dataUrl) => {
             setCapturedInstaxDataUrl(dataUrl)
             setCameraOpen(false)
-            setSeatInputOpen(true)
+            if (!pendingSeatId) {
+              setSeatInputOpen(true)
+              return
+            }
+
+            if (!credentials) {
+              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
+              router.replace("/maid/login")
+              return
+            }
+
+            try {
+              setInstaxProcessing(true)
+              const user = await fetchUserBySeat(credentials, pendingSeatId)
+              if (!user) {
+                showAlert("該当なし", `席番号 ${pendingSeatId} に割り当てられたユーザーが見つかりませんでした。`)
+                setCapturedInstaxDataUrl(null)
+                return
+              }
+              setConfirmUser(user)
+              setConfirmOpen(true)
+            } catch (err) {
+              const e = err instanceof Error ? err : new Error(String(err))
+              showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
+            } finally {
+              setInstaxProcessing(false)
+            }
           }}
         />
 
@@ -909,6 +938,12 @@ export default function Home() {
           dataUrl={capturedInstaxDataUrl}
           onConfirm={async (seatId) => {
             setSeatInputOpen(false)
+            if (!capturedInstaxDataUrl) {
+              setPendingSeatId(seatId)
+              setCameraOpen(true)
+              return
+            }
+
             if (!credentials) {
               showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
               router.replace("/maid/login")
@@ -920,6 +955,7 @@ export default function Home() {
               if (!user) {
                 showAlert("該当なし", `席番号 ${seatId} に割り当てられたユーザーが見つかりませんでした。`)
                 setCapturedInstaxDataUrl(null)
+                setPendingSeatId(null)
                 return
               }
               setConfirmUser(user)
@@ -934,6 +970,7 @@ export default function Home() {
           onCancel={() => {
             setCapturedInstaxDataUrl(null)
             setSeatInputOpen(false)
+            setPendingSeatId(null)
           }}
         />
 
@@ -965,6 +1002,7 @@ export default function Home() {
               setCapturedInstaxDataUrl(null)
               setConfirmUser(null)
               setConfirmOpen(false)
+              setPendingSeatId(null)
               void reloadAssignedUsers()
             } catch (err) {
               const e = err instanceof Error ? err : new Error(String(err))
@@ -975,6 +1013,7 @@ export default function Home() {
           }}
           onCancel={() => {
             setCapturedInstaxDataUrl(null)
+            setPendingSeatId(null)
           }}
         />
 
