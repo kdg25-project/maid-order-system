@@ -25,7 +25,7 @@ export function InstaxSaved({ open, onOpenChange, instaxId, onClose }: Props) {
           <div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full bg-rose-50 text-6xl font-bold text-rose-600">
             {instaxId ?? "--"}
           </div>
-          <p className="text-sm text-muted-foreground">上の番号がチェキIDです。控えておくか、履歴からご確認ください。</p>
+          <p className="text-sm text-muted-foreground">上の番号がチェキIDです。控えておいてください。</p>
           <div className="flex justify-center">
             <Button onClick={handleClose}>閉じる</Button>
           </div>
