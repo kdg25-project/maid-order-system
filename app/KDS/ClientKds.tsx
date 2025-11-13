@@ -21,12 +21,15 @@ const ClientKds = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuCache, setMenuCache] = useState<Record<number, Menu>>({});
   const [userCache, setUserCache] = useState<Record<string, User>>({});
+  const menuCacheRef = useRef<Record<number, Menu>>({});
+  const userCacheRef = useRef<Record<string, User>>({});
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchingMenus = useRef<Set<number>>(new Set());
+  const fetchingUsers = useRef<Set<string>>(new Set());
   const searchParams = useSearchParams();
   const currentState = (searchParams.get("state") as OrderState) || "pending";
 
   const nextState = (current: OrderState): OrderState | null => {
-    // Transition order: pending -> preparing -> served
     switch (current) {
       case "pending":
         return "preparing";
@@ -49,35 +52,47 @@ const ClientKds = () => {
     });
   };
 
-  const fetchMenu = useCallback(
-    async (menuId: number) => {
-      if (menuCache[menuId]) return;
-      try {
-        const res = await getMenuById(menuId);
-        if (res.data) {
-          setMenuCache((prev) => ({ ...prev, [menuId]: res.data.data }));
-        }
-      } catch (error) {
-        console.error("Failed to fetch menu:", error);
-      }
-    },
-    [menuCache],
-  );
+  const fetchMenu = useCallback(async (menuId: number) => {
+    if (menuCacheRef.current[menuId] || fetchingMenus.current.has(menuId)) {
+      return;
+    }
 
-  const fetchUser = useCallback(
-    async (userId: string) => {
-      if (userCache[userId]) return;
-      try {
-        const res = await getUserById(userId);
-        if (res.data) {
-          setUserCache((prev) => ({ ...prev, [userId]: res.data.data }));
-        }
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
+    fetchingMenus.current.add(menuId);
+
+    try {
+      const res = await getMenuById(menuId);
+      if (res.data) {
+        const menu = res.data.data;
+        menuCacheRef.current[menuId] = menu;
+        setMenuCache((prev) => ({ ...prev, [menuId]: menu }));
       }
-    },
-    [userCache],
-  );
+    } catch (error) {
+      console.error("Failed to fetch menu:", error);
+    } finally {
+      fetchingMenus.current.delete(menuId);
+    }
+  }, []);
+
+  const fetchUser = useCallback(async (userId: string) => {
+    if (userCacheRef.current[userId] || fetchingUsers.current.has(userId)) {
+      return;
+    }
+
+    fetchingUsers.current.add(userId);
+
+    try {
+      const res = await getUserById(userId);
+      if (res.data) {
+        const user = res.data.data;
+        userCacheRef.current[userId] = user;
+        setUserCache((prev) => ({ ...prev, [userId]: user }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+    } finally {
+      fetchingUsers.current.delete(userId);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
