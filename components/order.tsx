@@ -56,20 +56,30 @@ export function OrderTable({item}: Props) {
       <div className="grid grid-cols-2 gap-4 p-8">
         {item.slice(0, 8).map((product, index) => (
           <div key={product.id || index}
-            className="bg-white p-4 rounded-lg shadow-md transition hover:bg-gray-100 duration-300 h-full">
-            <Image src={product.image_url ?? ''} alt={product.name} width={200} height={200} className="px-4 flex flex-col justify-between py-2 items-bottom h-auto w-auto mx-auto" />
 
-            <h3 className="text-xl item-center w-fit mx-auto font-bold">{product.name}</h3>
+            className="bg-white p-4 rounded-lg shadow-md transition hover:bg-gray-100 duration-300 h-96 flex flex-col justify-between">
+              
+            <div className="flex justify-center items-center h-50">
+              <Image 
+                src={product.image_url ?? ''} 
+                alt={product.name} 
+                width={200} 
+                height={200} 
+
+                className="object-contain max-h-full max-w-full" 
+              />
+            </div>
+      
+            <h3 className="text-xl items-center w-fit mx-auto font-bold justify-between mb-0">{product.name}</h3>
 
             <button
               onClick={() => handleItemSelect(product)}
-              className="mt-3 w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition items-bottom">
+              className="w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition inset-x-0 bottom-0 items-center">
               これにする?
             </button>
           </div>
         ))}
       </div>
-
 
       {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 bg-gray-900/70 flex items-center justify-center p-4" onClick={handleCloseModal}>
@@ -89,12 +99,12 @@ export function OrderTable({item}: Props) {
               <div className="flex flex-col space-y-2 px-4">
                 <button
                   onClick={handleConfirmOrder}
-                  className="w-full bg-yellow-500 text-black font-semibold py-2 rounded-xl hover:bg-yellow-600">
+                  className="w-full bg-yellow-500 text-black justify-bottom font-semibold py-2 rounded-xl hover:bg-yellow-600">
                   これにする
                 </button>
                 <button
                   onClick={handleCloseModal}
-                  className="w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-xl hover:bg-gray-400">
+                  className="w-full bg-gray-300 text-gray-800 font-semibold justify-bottom py-2 rounded-xl hover:bg-gray-400">
                   しない
                 </button>
               </div>
