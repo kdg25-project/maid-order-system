@@ -13,11 +13,11 @@ function Page() {
         <Image src={logoSrc} alt="logo" width={128} height={64} className="w-64 h-32 mx-auto" />
         <div className="h-20"/>
         <div className="flex justify-center">
-        <Image src="/check.png" alt="check" width={64} height={64} className="w-40 h-40 mx-auto" />
+      <Image src="/error.png" alt="error" width={128} height={64} className="w-40 h-40 mx-auto" />
         </div>
         <div className="h-16"/>
-          <p className="flex justify-center font-bold text-gray-600">かしこまりました</p>
-          <p className="flex justify-center text-gray-600">そのままおまちくださいませ</p>
+          <p className="flex justify-center font-bold text-gray-600">トラブルがおきました</p>
+          <p className="flex justify-center text-gray-600">スタッフをよんでください</p>
       </div>
     </div>
   );

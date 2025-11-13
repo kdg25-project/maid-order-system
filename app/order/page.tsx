@@ -41,9 +41,7 @@ function Page() {
           <Image src={logoSrc} alt="logo" width={128} height={64} className="w-32 h-auto mx-auto" />
         </div>
         <div className="min-h-screen p-4">
-          <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
-          <Image src={drinkSrc} alt="drink" width={128} height={64} className="w-32 h-auto mx-auto" />
-          </div>
+          
           {isLoading && (
               <div className="text-center text-gray-700 mt-8">
                   データを読み込み中...
@@ -56,6 +54,9 @@ function Page() {
           )}
           {!isLoading && !error && (
               <div className="mt-8">
+                <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
+                <Image src={drinkSrc} alt="drink" width={128} height={64} className="w-32 h-auto mx-auto" />
+                </div>
                 <OrderTable item={menus} />
               </div>
           )}
