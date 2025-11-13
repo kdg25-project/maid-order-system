@@ -122,7 +122,7 @@ export function OrderTable({item}: Props) {
             className={`px-3 py-1 rounded-full transition whitespace-nowrap p-4
               ${isOrderConfirmed
                 ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                : 'bg-yellow-500 cursor-not-allowed text-gray-700'}
+                : 'bg-gray-500 cursor-not-allowed text-gray-700'}
             `}
           >
             ご注文確認
