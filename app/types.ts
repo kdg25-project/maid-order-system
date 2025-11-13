@@ -72,6 +72,7 @@ export interface UpdateMenuRequest {
 export interface User {
   id: string;
   name: string | null;
+  honorific: string | null;
   status: string | null;
   maid_id: string | null;
   instax_maid_id: string | null;
@@ -91,12 +92,14 @@ export type MaidUsersApiResponse = ApiResponse<{
 export interface RegisterUserRequest {
   seat_id: number;
   maid_id: string;
+  honorific?: string | null;
   status?: string;
 }
 
 export interface UpdateUserRequest {
   name?: string | null;
   status?: string | null;
+  honorific?: string | null;
   maid_id?: string | null;
   instax_maid_id?: string | null;
   seat_id?: number | null;
@@ -159,6 +162,7 @@ export type UserEngagementState = "serving" | "leaving";
 export interface AssignedUser {
   id: string;
   name: string | null;
+  honorific: string | null;
   status: string | null;
   maid_id: string | null;
   instax_maid_id: string | null;

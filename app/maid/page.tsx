@@ -14,14 +14,8 @@ import {
   Camera,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  User,
-  Maid,
-  MaidsApiResponse,
-  Menu,
-  MenusApiResponse,
-} from "@/app/types";
-import { UserEdit } from "@/components/maid/user-edit";
+import { User, Maid, Menu, MenusApiResponse } from "@/app/types";
+import { UserEdit, DEFAULT_HONORIFIC } from "@/components/maid/user-edit";
 import { QRCodeScan } from "@/components/maid/qrcode/qrcode-scan";
 import { ProfileEdit } from "@/components/maid/profile-edit";
 import { AlertMessage } from "@/components/maid/alert-message";
@@ -177,7 +171,6 @@ export default function Home() {
   const router = useRouter();
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [isUsersLoading, setUsersLoading] = useState(true);
-  const [maids, setMaids] = useState<Maid[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [isMenusLoading, setMenusLoading] = useState(true);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -199,11 +192,11 @@ export default function Home() {
   const [form, setForm] = useState<{
     name: string;
     seat_id: number;
-    maid_id: string;
+    honorific: string;
   }>({
     name: "",
     seat_id: 1,
-    maid_id: "",
+    honorific: DEFAULT_HONORIFIC,
   });
   const [profileForm, setProfileForm] = useState<{
     name: string;
@@ -212,8 +205,6 @@ export default function Home() {
     name: "",
     image: "",
   });
-  const [editingInitialMaidId, setEditingInitialMaidId] = useState<string>("");
-  const [isMaidChangeConfirmOpen, setMaidChangeConfirmOpen] = useState(false);
   const forceDeactivateMaid = useForceMaidDeactivate(credentials);
   const [isCameraOpen, setCameraOpen] = useState(false);
   const [capturedInstaxDataUrl, setCapturedInstaxDataUrl] = useState<string | null>(null);
@@ -227,8 +218,6 @@ export default function Home() {
   const closeEditor = () => {
     setDrawerOpen(false);
     setEditingId(null);
-    setEditingInitialMaidId("");
-    setMaidChangeConfirmOpen(false);
   };
 
   const showAlert = useCallback((title: string, message: string) => {
@@ -326,24 +315,6 @@ export default function Home() {
   }, [showAlert]);
 
   useEffect(() => {
-    const fetchMaids = async () => {
-      try {
-        const response = await fetch("https://api.kdgn.tech/api/maids");
-        const data: MaidsApiResponse = await response.json();
-        if (data.success && data.data) {
-          setMaids(data.data);
-        }
-      } catch (error) {
-        showAlert(
-          "エラー",
-          `メイドリストの取得中にエラーが発生しました。${error}`,
-        );
-      }
-    };
-    fetchMaids();
-  }, [showAlert]);
-
-  useEffect(() => {
     if (!credentials) return;
     void reloadAssignedUsers();
   }, [credentials, reloadAssignedUsers]);
@@ -365,14 +336,12 @@ export default function Home() {
   const openEditor = (id: string) => {
     const target = assignedUsers.find((user) => user.id === id);
     if (!target) return;
-    const initialMaidId = target.maid_id ?? credentials?.id ?? "";
     setEditingId(id);
     setForm({
       name: target.name ?? "",
       seat_id: target.seat_id ?? 1,
-      maid_id: initialMaidId,
+      honorific: target.honorific ?? DEFAULT_HONORIFIC,
     });
-    setEditingInitialMaidId(initialMaidId);
     setDrawerOpen(true);
   };
 
@@ -393,33 +362,26 @@ export default function Home() {
     }
     if (isUserSaving) return;
     const targetUserId = editingId;
-    const maidChanged = editingInitialMaidId !== form.maid_id;
 
     const normalizedSeatId =
       Number.isFinite(form.seat_id) && form.seat_id > 0 ? form.seat_id : null;
-    const normalizedMaidId =
-      form.maid_id.trim() === "" ? null : form.maid_id.trim();
+    const normalizedHonorific =
+      (form.honorific || DEFAULT_HONORIFIC).trim();
 
     try {
       setUserSaving(true);
       const updatedUser = await updateUserInfo(credentials, editingId, {
         name: trimmedName,
         seat_id: normalizedSeatId,
-        maid_id: normalizedMaidId,
+        honorific: normalizedHonorific,
       });
       setAssignedUsers((prev) => {
-        if (maidChanged) {
-          return prev.filter((user) => user.id !== targetUserId);
-        }
         return prev.map((user) =>
           user.id === targetUserId ? updatedUser : user,
         );
       });
       showAlert("完了", "ユーザー情報を更新しました。");
       closeEditor();
-      if (maidChanged) {
-        void reloadAssignedUsers();
-      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -438,10 +400,6 @@ export default function Home() {
       return;
     }
     if (isUserSaving) return;
-    if (editingInitialMaidId !== form.maid_id) {
-      setMaidChangeConfirmOpen(true);
-      return;
-    }
     void executeUserSave();
   };
 
@@ -632,13 +590,6 @@ export default function Home() {
       ),
     ];
   }, [isActiveUpdating, isProfileLoading, maidProfile, isInstaxProcessing]);
-
-  const getMaidName = (maidId: string) => {
-    if (!maidId) return "未設定";
-    return maids.find((maid) => maid.id === maidId)?.name ?? "未設定";
-  };
-
-  const maidChangeDescription = `担当メイドを「${getMaidName(editingInitialMaidId)}」から「${getMaidName(form.maid_id)}」に変更します。よろしいですか？`;
 
   return (
     <main className="min-h-screen bg-linear-to-b from-rose-50 via-white to-white">
@@ -847,7 +798,11 @@ export default function Home() {
               </p>
             ) : (
               assignedUsers.map((user) => {
-                const displayName = user.name ? `${user.name}様` : "名前未登録";
+                const honorificLabel = user.honorific || DEFAULT_HONORIFIC;
+                const trimmedName = user.name?.trim() ?? "";
+                const displayName = trimmedName
+                  ? `${trimmedName}${honorificLabel}`
+                  : honorificLabel;
                 const elapsedMinutes = getElapsedMinutes(user.created_at);
                 const elapsedTimeLabel = formatElapsedTime(elapsedMinutes);
 
@@ -885,7 +840,6 @@ export default function Home() {
           }}
           form={form}
           onFormChange={setForm}
-          maids={maids}
           onSave={handleSave}
         />
 
@@ -1033,19 +987,6 @@ export default function Home() {
           form={profileForm}
           onFormChange={setProfileForm}
           onSave={handleProfileSave}
-        />
-
-        <AlertMessage
-          open={isMaidChangeConfirmOpen}
-          onOpenChange={setMaidChangeConfirmOpen}
-          title="担当メイドの変更"
-          description={maidChangeDescription}
-          confirmLabel="変更を保存"
-          cancelLabel="キャンセル"
-          showCancel={true}
-          onConfirm={() => {
-            void executeUserSave();
-          }}
         />
 
         <AlertMessage
