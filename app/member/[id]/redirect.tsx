@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import type { User } from "@/app/types";
 
 export default function RedirectPage(props: { userdata: User }) {
-  localStorage.setItem("userId", props.userdata.id);
   const router = useRouter();
   useEffect(() => {
+    localStorage.setItem("userId", props.userdata.id);
     switch (props.userdata.status) {
       case "welcome":
         router.push("/welcome");
@@ -22,12 +22,12 @@ export default function RedirectPage(props: { userdata: User }) {
       case "instax_complete":
       case "leaving":
         window.location.assign(
-          `https://instax.kdgn.tech/picture/${localStorage.getItem("userId")})`,
+          `https://instax.kdgn.tech/picture/${props.userdata.id})`,
         );
         break;
       default:
         router.push("/");
     }
-  }, [router, props.userdata.status]);
+  }, [router, props.userdata]);
   return null;
 }
