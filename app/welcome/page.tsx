@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function WelcomePage() {
   return (
-    <div className="flex flex-col items-center gap-8 p-8">
+    <div className="flex flex-col items-center gap-8 p-6">
       <Image
         src={MaidCafe_Logo}
         width={300}
