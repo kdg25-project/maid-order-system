@@ -42,7 +42,9 @@ const ClientKds = () => {
   };
 
   const parseDateString = (dateString: string): Date => {
-    return new Date(dateString);
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 9);
+    return date;
   };
 
   const formatTime = (date: Date): string => {
