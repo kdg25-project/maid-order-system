@@ -69,14 +69,15 @@ export function OrderTable({item}: Props) {
                 className="object-contain max-h-full max-w-full" 
               />
             </div>
-      
+      <div className="flex flex-col justify-between">
             <h3 className="text-xl items-center w-fit mx-auto font-bold justify-between mb-0">{product.name}</h3>
-
+          <div className="py-4"/>
             <button
               onClick={() => handleItemSelect(product)}
               className="w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition inset-x-0 bottom-0 items-center">
               これにする?
             </button>
+      </div>
           </div>
         ))}
       </div>
