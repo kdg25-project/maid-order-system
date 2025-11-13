@@ -22,7 +22,7 @@ export default function RedirectPage(props: { userdata: User }) {
       case "instax_complete":
       case "leaving":
         window.location.assign(
-          `https://instax.kdgn.tech/picture/${props.userdata.id})`,
+          `https://instax.kdgn.tech/picture/${props.userdata.id}`,
         );
         break;
       default:
