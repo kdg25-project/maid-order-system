@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadMaidCredentials } from "@/lib/maid-auth";
-import { easyFetch } from "@/lib/easyFetch";
 import { Menu } from "@/app/types"; 
 import Image from 'next/image';
 
@@ -77,7 +75,7 @@ export function OrderTable({item}: Props) {
               className="w-full bg-yellow-500 text-black py-1 rounded-full hover:bg-yellow-600 transition inset-x-0 bottom-0 items-center">
               これにする?
             </button>
-      </div>
+          </div>
           </div>
         ))}
       </div>
