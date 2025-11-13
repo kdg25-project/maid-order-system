@@ -17,6 +17,7 @@ import type { LucideIcon } from "lucide-react";
 import { User, Maid, Menu, MenusApiResponse } from "@/app/types";
 import { UserEdit, DEFAULT_HONORIFIC } from "@/components/maid/user-edit";
 import { QRCodeScan } from "@/components/maid/qrcode/qrcode-scan";
+import { SeatNumberDialog } from "@/components/maid/seat-number-dialog";
 import { ProfileEdit } from "@/components/maid/profile-edit";
 import { AlertMessage } from "@/components/maid/alert-message";
 import { Button } from "@/components/ui/button";
@@ -24,13 +25,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   clearMaidCredentials,
-  credentialsFromUrl,
   dataUrlToFile,
   fetchAssignedUsers,
   fetchMaidProfile,
+  fetchUserBySeat,
   loadMaidCredentials,
   MaidCredentials,
-  saveMaidCredentials,
+  postInstaxBySeat,
+  registerUserEntry,
   updateMaidActiveStatus,
   updateMaidProfile,
   updateUserInfo,
@@ -40,7 +42,6 @@ import { cn } from "@/lib/utils";
 import { InstaxCamera } from "@/components/maid/instax-camera";
 import InstaxSeatInput from "@/components/maid/instax-seat-input";
 import InstaxConfirmUser from "@/components/maid/instax-confirm-user";
-import { fetchUserBySeat, postInstaxBySeat } from "@/lib/maid-auth";
 import InstaxSaved from "@/components/maid/instax-saved";
 
 const orderResponse = {
@@ -167,6 +168,46 @@ const formatElapsedTime = (minutes: number) => {
   return `${remainingMinutes}分`;
 };
 
+const KDGN_HOST_PATTERN = /(^|\.)kdgn\.tech$/i;
+
+const parseMemberUserId = (raw: string): string | null => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const candidates = [trimmed];
+  if (!/^https?:\/\//i.test(trimmed)) {
+    candidates.push(`https://${trimmed}`);
+  }
+  if (trimmed.startsWith("/")) {
+    candidates.push(`https://kdgn.tech${trimmed}`);
+  } else if (trimmed.startsWith("member/")) {
+    candidates.push(`https://kdgn.tech/${trimmed}`);
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate);
+      if (!KDGN_HOST_PATTERN.test(url.hostname)) {
+        continue;
+      }
+      const segments = url.pathname.split("/").filter(Boolean);
+      const memberIndex = segments.findIndex(
+        (segment) => segment.toLowerCase() === "member",
+      );
+      if (memberIndex === -1) continue;
+      const userId = segments[memberIndex + 1];
+      if (userId) {
+        return userId;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  const fallbackMatch = trimmed.match(/member\/([^/?#]+)/i);
+  return fallbackMatch?.[1] ?? null;
+};
+
 export default function Home() {
   const router = useRouter();
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
@@ -183,6 +224,9 @@ export default function Home() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertTitle, setAlertTitle] = useState("エラー");
+  const [isSeatAssignDialogOpen, setSeatAssignDialogOpen] = useState(false);
+  const [pendingQrUserId, setPendingQrUserId] = useState<string | null>(null);
+  const [isRegisteringUser, setRegisteringUser] = useState(false);
   const [credentials, setCredentials] = useState<MaidCredentials | null>(null);
   const [maidProfile, setMaidProfile] = useState<Maid | null>(null);
   const [isProfileLoading, setProfileLoading] = useState(true);
@@ -218,6 +262,11 @@ export default function Home() {
   const closeEditor = () => {
     setDrawerOpen(false);
     setEditingId(null);
+  };
+
+  const closeSeatAssignmentFlow = () => {
+    setSeatAssignDialogOpen(false);
+    setPendingQrUserId(null);
   };
 
   const showAlert = useCallback((title: string, message: string) => {
@@ -405,16 +454,80 @@ export default function Home() {
 
   const handleQRScan = (result: string) => {
     setQRDrawerOpen(false);
-    const parsed = credentialsFromUrl(result);
-    if (!parsed) {
-      showAlert("QRコードエラー", "再度スキャンしてください。");
+    const userId = parseMemberUserId(result);
+    if (!userId) {
+      showAlert("QRコードエラー", "会員QRコードを認識できませんでした。再度スキャンしてください。");
       return;
     }
-    saveMaidCredentials(parsed);
-    setCredentials(parsed);
-    router.push(
-      `/maid/login?id=${encodeURIComponent(parsed.id)}&key=${encodeURIComponent(parsed.apiKey)}`,
-    );
+    if (!credentials) {
+      showAlert(
+        "エラー",
+        "ログイン情報が見つかりません。再度ログインをしてください。",
+      );
+      router.replace("/maid/login");
+      return;
+    }
+    setPendingQrUserId(userId);
+    setSeatAssignDialogOpen(true);
+  };
+
+  const handleSeatAssignmentConfirm = async (seatId: number) => {
+    if (!pendingQrUserId) {
+      showAlert("エラー", "QRコード情報が見つかりません。再度スキャンしてください。");
+      return;
+    }
+    if (!credentials) {
+      showAlert(
+        "エラー",
+        "ログイン情報が見つかりません。再度ログインをしてください。",
+      );
+      router.replace("/maid/login");
+      return;
+    }
+    if (isRegisteringUser) return;
+
+    try {
+      setRegisteringUser(true);
+      const user = await registerUserEntry(credentials, pendingQrUserId, {
+        seat_id: seatId,
+        maid_id: credentials.id,
+        honorific: DEFAULT_HONORIFIC,
+      });
+
+      setAssignedUsers((prev) => {
+        const index = prev.findIndex((item) => item.id === user.id);
+        if (index === -1) {
+          return [user, ...prev];
+        }
+        return prev.map((item) => (item.id === user.id ? user : item));
+      });
+
+      setEditingId(user.id);
+      setForm({
+        name: user.name ?? "",
+        seat_id: user.seat_id ?? seatId,
+        honorific: user.honorific ?? DEFAULT_HONORIFIC,
+      });
+      closeSeatAssignmentFlow();
+      setDrawerOpen(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "ユーザーの登録に失敗しました。";
+      showAlert("登録エラー", message);
+    } finally {
+      setRegisteringUser(false);
+    }
+  };
+
+  const handleSeatDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      if (isRegisteringUser) return;
+      closeSeatAssignmentFlow();
+      return;
+    }
+    setSeatAssignDialogOpen(true);
   };
 
   const handleProfileSave = async (nextForm: {
@@ -555,6 +668,8 @@ export default function Home() {
       name: "",
       image: "",
     });
+    closeSeatAssignmentFlow();
+    setRegisteringUser(false);
     router.replace("/maid/login");
   };
 
@@ -847,6 +962,14 @@ export default function Home() {
           open={isQRDrawerOpen}
           onOpenChange={setQRDrawerOpen}
           onScan={handleQRScan}
+        />
+
+        <SeatNumberDialog
+          open={isSeatAssignDialogOpen}
+          onOpenChange={handleSeatDialogOpenChange}
+          onSubmit={handleSeatAssignmentConfirm}
+          onCancel={closeSeatAssignmentFlow}
+          isSubmitting={isRegisteringUser}
         />
 
         <InstaxCamera

@@ -2,6 +2,7 @@ import {
   Maid,
   MaidApiResponse,
   MaidUsersApiResponse,
+  RegisterUserRequest,
   UpdateMaidActiveRequest,
   UpdateUserRequest,
   User,
@@ -239,6 +240,27 @@ export async function fetchUserBySeat(
   }
 
   const data: { success: boolean; message: string; data: User } = await response.json();
+  return data.data;
+}
+
+export async function registerUserEntry(
+  credentials: MaidCredentials,
+  userId: string,
+  payload: RegisterUserRequest,
+): Promise<User> {
+  const response = await fetch(apiUrl(`/users/${userId}`), {
+    method: "POST",
+    headers: buildAuthHeaders(credentials, {
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ユーザーの登録に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: UserApiResponse = await response.json();
   return data.data;
 }
 
