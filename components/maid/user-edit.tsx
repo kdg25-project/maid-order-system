@@ -3,15 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface Maid {
-  id: string;
-  name: string;
-}
-
 interface UserEditForm {
   name: string;
   seat_id: number;
-  maid_id: string;
+  honorific: string;
 }
 
 interface UserEditProps {
@@ -19,11 +14,15 @@ interface UserEditProps {
   onOpenChange: (open: boolean) => void;
   form: UserEditForm;
   onFormChange: (form: UserEditForm) => void;
-  maids: Maid[];
   onSave: () => void;
 }
 
-export function UserEdit({ open, onOpenChange, form, onFormChange, maids, onSave }: UserEditProps) {
+export const HONORIFIC_OPTIONS = ["ご主人様", "お嬢様"] as const;
+export const DEFAULT_HONORIFIC = HONORIFIC_OPTIONS[0];
+
+export function UserEdit({ open, onOpenChange, form, onFormChange, onSave }: UserEditProps) {
+  const selectedHonorific = form.honorific || DEFAULT_HONORIFIC;
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -50,18 +49,18 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, maids, onSave
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">担当メイド</label>
+              <label className="text-sm font-medium">敬称</label>
               <Select
-                value={form.maid_id}
-                onValueChange={(value) => onFormChange({ ...form, maid_id: value })}
+                value={selectedHonorific}
+                onValueChange={(value) => onFormChange({ ...form, honorific: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="メイドを選択" />
+                  <SelectValue placeholder="敬称を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {maids.map((maid) => (
-                    <SelectItem key={maid.id} value={maid.id}>
-                      {maid.name}
+                  {HONORIFIC_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
                     </SelectItem>
                   ))}
                 </SelectContent>
