@@ -49,6 +49,7 @@ export interface Menu {
   id: number;
   name: string;
   stock: number;
+  description: string;
   image_url: string | null;
   created_at: string;
   updated_at: string;

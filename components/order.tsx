@@ -84,7 +84,7 @@ export function OrderTable({item}: Props) {
 
             <div className="w-full">
               <h3 className="text-2xl font-bold mb-4 text-center">{selectedItem.name}</h3>
-              <p className="mb-4 text-center">深いコクとお口の中に、はじける刺激で、ご主人様を心身ともにリフレッシュして、ハッピーを届けてくれるドリンクだょ。</p>
+              <p className="mb-4 text-center">{selectedItem.description}</p>
               <h4 className="text-sm font-extralight text-center mx-auto mb-4">*画像はイメージです</h4>
               <div className="flex flex-col space-y-2 px-4">
                 <button
