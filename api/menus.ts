@@ -1,3 +1,5 @@
+"use server";
+
 import { easyFetch } from "@/lib/easyFetch";
 import { loadMaidCredentials } from "@/lib/maid-auth";
 import type { ApiResponse, Menu, MenusListResponse } from "@/app/types";
