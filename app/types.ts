@@ -49,7 +49,7 @@ export interface Menu {
   id: number;
   name: string;
   stock: number;
-  description: string;
+  description?: string | null;
   image_url: string;
   created_at: string;
   updated_at: string;
