@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { updateUser } from "@/api/users";
+import { getMaidAssignedUsers } from "@/api/maids";
 import {
   clearMaidCredentials,
   dataUrlToFile,
@@ -135,25 +136,6 @@ const staticQuickActions: QuickAction[] = [
   },
 ];
 
-const servedStats = {
-  total: 14,
-};
-
-const orderStateStyles = {
-  pending: {
-    label: "待機中",
-    className: "border-black-100 bg-black-50 text-black-600",
-  },
-  preparing: {
-    label: "準備中",
-    className: "border-orange-100 bg-orange-50 text-orange-600",
-  },
-  served: {
-    label: "提供済み",
-    className: "border-emerald-100 bg-emerald-50 text-emerald-600",
-  },
-} as const;
-
 const getElapsedMinutes = (isoString: string) => {
   const timestamp = new Date(isoString).getTime();
   if (Number.isNaN(timestamp)) {
@@ -262,7 +244,9 @@ export default function Home() {
   });
   const forceDeactivateMaid = useForceMaidDeactivate(credentials);
   const [isCameraOpen, setCameraOpen] = useState(false);
-  const [capturedInstaxDataUrl, setCapturedInstaxDataUrl] = useState<string | null>(null);
+  const [capturedInstaxDataUrl, setCapturedInstaxDataUrl] = useState<
+    string | null
+  >(null);
   const [isSeatInputOpen, setSeatInputOpen] = useState(false);
   const [pendingSeatId, setPendingSeatId] = useState<number | null>(null);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
@@ -270,6 +254,7 @@ export default function Home() {
   const [savedInstaxId, setSavedInstaxId] = useState<number | null>(null);
   const [isSavedOpen, setSavedOpen] = useState(false);
   const [isActiveMaidsOpen, setActiveMaidsOpen] = useState(false);
+  const [servedCount, setServedCount] = useState<number>(0);
 
   const closeEditor = () => {
     setDrawerOpen(false);
@@ -291,7 +276,9 @@ export default function Home() {
     if (!credentials) return;
     setUsersLoading(true);
     try {
-      const users = await fetchAssignedUsers(credentials, { status: "serving"});
+      const users = await fetchAssignedUsers(credentials, {
+        status: "serving",
+      });
       setAssignedUsers(users);
     } catch (error) {
       const message =
@@ -303,6 +290,23 @@ export default function Home() {
       setUsersLoading(false);
     }
   }, [credentials, showAlert]);
+
+  const reloadServedCount = useCallback(async () => {
+    if (!credentials) return;
+    try {
+      const response = await getMaidAssignedUsers(
+        credentials.id,
+        { status: "both" },
+        credentials.apiKey,
+      );
+      if (response.data.success && response.data) {
+        setServedCount(response.data.data.users.length);
+      }
+    } catch (error) {
+      // エラーは特に表示しない（統計情報のため）
+      console.error("Failed to load served count:", error);
+    }
+  }, [credentials]);
 
   useEffect(() => {
     const stored = loadMaidCredentials();
@@ -378,21 +382,8 @@ export default function Home() {
   useEffect(() => {
     if (!credentials) return;
     void reloadAssignedUsers();
-  }, [credentials, reloadAssignedUsers]);
-
-  const menuLookup = useMemo(() => {
-    return menus.reduce<Record<number, Menu>>((acc, menu) => {
-      acc[menu.id] = menu;
-      return acc;
-    }, {});
-  }, [menus]);
-
-  const userLookupLocal = useMemo(() => {
-    return assignedUsers.reduce<Record<string, User>>((acc, user) => {
-      acc[user.id] = user;
-      return acc;
-    }, {});
-  }, [assignedUsers]);
+    void reloadServedCount();
+  }, [credentials, reloadAssignedUsers, reloadServedCount]);
 
   const openEditor = (id: string) => {
     const target = assignedUsers.find((user) => user.id === id);
@@ -426,8 +417,7 @@ export default function Home() {
 
     const normalizedSeatId =
       Number.isFinite(form.seat_id) && form.seat_id > 0 ? form.seat_id : null;
-    const normalizedHonorific =
-      (form.honorific || DEFAULT_HONORIFIC).trim();
+    const normalizedHonorific = (form.honorific || DEFAULT_HONORIFIC).trim();
 
     try {
       setUserSaving(true);
@@ -477,7 +467,7 @@ export default function Home() {
         status: "leaving",
         is_valid: false,
       });
-      
+
       if (response.status < 200 || response.status >= 300) {
         throw new Error("ユーザー情報の更新に失敗しました。");
       }
@@ -488,14 +478,12 @@ export default function Home() {
       setAssignedUsers((prev) => {
         return prev.filter((user) => user.id !== editingId);
       });
-      
+
       showAlert("完了", "ユーザーを退店状態にしました。");
       closeEditor();
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "退店処理に失敗しました。";
+        error instanceof Error ? error.message : "退店処理に失敗しました。";
       showAlert("エラー", message);
     } finally {
       setUserLeaving(false);
@@ -506,7 +494,10 @@ export default function Home() {
     setQRDrawerOpen(false);
     const userId = parseMemberUserId(result);
     if (!userId) {
-      showAlert("QRコードエラー", "会員QRコードを認識できませんでした。再度スキャンしてください。");
+      showAlert(
+        "QRコードエラー",
+        "会員QRコードを認識できませんでした。再度スキャンしてください。",
+      );
       return;
     }
     if (!credentials) {
@@ -523,7 +514,10 @@ export default function Home() {
 
   const handleSeatAssignmentConfirm = async (seatId: number) => {
     if (!pendingQrUserId) {
-      showAlert("エラー", "QRコード情報が見つかりません。再度スキャンしてください。");
+      showAlert(
+        "エラー",
+        "QRコード情報が見つかりません。再度スキャンしてください。",
+      );
       return;
     }
     if (!credentials) {
@@ -560,6 +554,7 @@ export default function Home() {
       });
       closeSeatAssignmentFlow();
       setDrawerOpen(true);
+      void reloadServedCount();
     } catch (error) {
       const message =
         error instanceof Error
@@ -683,9 +678,9 @@ export default function Home() {
     } else if (actionId === "edit_profile") {
       setProfileDrawerOpen(true);
     } else if (actionId === "instax") {
-      setCapturedInstaxDataUrl(null)
-      setPendingSeatId(null)
-      setSeatInputOpen(true)
+      setCapturedInstaxDataUrl(null);
+      setPendingSeatId(null);
+      setSeatInputOpen(true);
     } else if (actionId === "logout") {
       setLogoutConfirmOpen(true);
     }
@@ -851,7 +846,7 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent className="relative space-y-4 flex items-center justify-start">
-            <p className="text-5xl font-semibold">{servedStats.total}人</p>
+            <p className="text-5xl font-semibold">{servedCount}人</p>
             <div className="absolute bottom-0 -right-5 opacity-80">
               <div className="relative bottom-8 right-28 SparkleAnimation1">
                 <Sparkle
@@ -972,42 +967,50 @@ export default function Home() {
         <InstaxCamera
           open={isCameraOpen}
           onOpenChange={setCameraOpen}
-          onError={(err) => showAlert("エラー", `カメラの起動に失敗しました: ${err.message}`)}
+          onError={(err) =>
+            showAlert("エラー", `カメラの起動に失敗しました: ${err.message}`)
+          }
           onConfirm={(dataUrl) => {
-            setCapturedInstaxDataUrl(dataUrl)
-            setCameraOpen(false)
+            setCapturedInstaxDataUrl(dataUrl);
+            setCameraOpen(false);
             if (confirmUser) {
-              setConfirmOpen(true)
-              return
+              setConfirmOpen(true);
+              return;
             }
 
             (async () => {
               if (!pendingSeatId) {
-                setSeatInputOpen(true)
-                return
+                setSeatInputOpen(true);
+                return;
               }
               if (!credentials) {
-                showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
-                router.replace("/maid/login")
-                return
+                showAlert(
+                  "エラー",
+                  "ログイン情報が見つかりません。再ログインしてください。",
+                );
+                router.replace("/maid/login");
+                return;
               }
               try {
-                setInstaxProcessing(true)
-                const user = await fetchUserBySeat(credentials, pendingSeatId)
+                setInstaxProcessing(true);
+                const user = await fetchUserBySeat(credentials, pendingSeatId);
                 if (!user) {
-                  showAlert("該当なし", `席番号 ${pendingSeatId} に割り当てられたユーザーが見つかりませんでした。`)
-                  setCapturedInstaxDataUrl(null)
-                  return
+                  showAlert(
+                    "該当なし",
+                    `席番号 ${pendingSeatId} に割り当てられたユーザーが見つかりませんでした。`,
+                  );
+                  setCapturedInstaxDataUrl(null);
+                  return;
                 }
-                setConfirmUser(user)
-                setConfirmOpen(true)
+                setConfirmUser(user);
+                setConfirmOpen(true);
               } catch (err) {
-                const e = err instanceof Error ? err : new Error(String(err))
-                showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
+                const e = err instanceof Error ? err : new Error(String(err));
+                showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`);
               } finally {
-                setInstaxProcessing(false)
+                setInstaxProcessing(false);
               }
-            })()
+            })();
           }}
         />
 
@@ -1016,34 +1019,40 @@ export default function Home() {
           onOpenChange={setSeatInputOpen}
           dataUrl={capturedInstaxDataUrl}
           onConfirm={async (seatId) => {
-            setSeatInputOpen(false)
+            setSeatInputOpen(false);
             if (!credentials) {
-              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
-              router.replace("/maid/login")
-              return
+              showAlert(
+                "エラー",
+                "ログイン情報が見つかりません。再ログインしてください。",
+              );
+              router.replace("/maid/login");
+              return;
             }
             try {
-              setInstaxProcessing(true)
-              const user = await fetchUserBySeat(credentials, seatId)
+              setInstaxProcessing(true);
+              const user = await fetchUserBySeat(credentials, seatId);
               if (!user) {
-                showAlert("該当なし", `席番号 ${seatId} に割り当てられたユーザーが見つかりませんでした。`)
-                setPendingSeatId(null)
-                return
+                showAlert(
+                  "該当なし",
+                  `席番号 ${seatId} に割り当てられたユーザーが見つかりませんでした。`,
+                );
+                setPendingSeatId(null);
+                return;
               }
-              setConfirmUser(user)
-              setPendingSeatId(seatId)
-              setConfirmOpen(true)
+              setConfirmUser(user);
+              setPendingSeatId(seatId);
+              setConfirmOpen(true);
             } catch (err) {
-              const e = err instanceof Error ? err : new Error(String(err))
-              showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`)
+              const e = err instanceof Error ? err : new Error(String(err));
+              showAlert("エラー", `ユーザー取得に失敗しました: ${e.message}`);
             } finally {
-              setInstaxProcessing(false)
+              setInstaxProcessing(false);
             }
           }}
           onCancel={() => {
-            setCapturedInstaxDataUrl(null)
-            setSeatInputOpen(false)
-            setPendingSeatId(null)
+            setCapturedInstaxDataUrl(null);
+            setSeatInputOpen(false);
+            setPendingSeatId(null);
           }}
         />
 
@@ -1053,45 +1062,64 @@ export default function Home() {
           user={confirmUser}
           dataUrl={capturedInstaxDataUrl}
           onProceed={() => {
-            setConfirmOpen(false)
-            setCameraOpen(true)
+            setConfirmOpen(false);
+            setCameraOpen(true);
           }}
           onConfirm={async () => {
             if (!confirmUser?.seat_id) {
-              showAlert("エラー", "ユーザーに席情報がありません。保存できません。")
-              return
+              showAlert(
+                "エラー",
+                "ユーザーに席情報がありません。保存できません。",
+              );
+              return;
             }
             if (!credentials) {
-              showAlert("エラー", "ログイン情報が見つかりません。再ログインしてください。")
-              router.replace("/maid/login")
-              return
+              showAlert(
+                "エラー",
+                "ログイン情報が見つかりません。再ログインしてください。",
+              );
+              router.replace("/maid/login");
+              return;
             }
-            const file = dataUrlToFile(capturedInstaxDataUrl ?? "", `instax-${Date.now()}.jpg`)
+            const file = dataUrlToFile(
+              capturedInstaxDataUrl ?? "",
+              `instax-${Date.now()}.jpg`,
+            );
             if (!file) {
-              showAlert("エラー", "画像データの変換に失敗しました。再撮影してください。")
-              return
+              showAlert(
+                "エラー",
+                "画像データの変換に失敗しました。再撮影してください。",
+              );
+              return;
             }
             try {
-              setInstaxProcessing(true)
-              const instax = await postInstaxBySeat(credentials, confirmUser.seat_id, file)
-              await updateUser(confirmUser.id, { status: "instax_waiting" })
-              setSavedInstaxId(instax.id)
-              setSavedOpen(true)
-              setCapturedInstaxDataUrl(null)
-              setConfirmUser(null)
-              setConfirmOpen(false)
-              setPendingSeatId(null)
-              void reloadAssignedUsers()
+              setInstaxProcessing(true);
+              const instax = await postInstaxBySeat(
+                credentials,
+                confirmUser.seat_id,
+                file,
+              );
+              await updateUser(confirmUser.id, { status: "instax_waiting" });
+              setSavedInstaxId(instax.id);
+              setSavedOpen(true);
+              setCapturedInstaxDataUrl(null);
+              setConfirmUser(null);
+              setConfirmOpen(false);
+              setPendingSeatId(null);
+              void reloadAssignedUsers();
             } catch (err) {
-              const e = err instanceof Error ? err : new Error(String(err))
-              showAlert("保存エラー", `チェキの保存に失敗しました: ${e.message}`)
+              const e = err instanceof Error ? err : new Error(String(err));
+              showAlert(
+                "保存エラー",
+                `チェキの保存に失敗しました: ${e.message}`,
+              );
             } finally {
-              setInstaxProcessing(false)
+              setInstaxProcessing(false);
             }
           }}
           onCancel={() => {
-            setCapturedInstaxDataUrl(null)
-            setPendingSeatId(null)
+            setCapturedInstaxDataUrl(null);
+            setPendingSeatId(null);
           }}
         />
 
