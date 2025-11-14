@@ -18,6 +18,14 @@ export const metadata: Metadata = {
   title: "バンタンメイドカフェ",
   description:
     "KADOKAWAドワンゴ情報工科学院 名古屋校1年生が開発したオリジナルシステムで動くメイドカフェです。",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    noarchive: true,
+    noimageindex: true,
+    nosnippet: true,
+  },
 };
 
 export default function RootLayout({
