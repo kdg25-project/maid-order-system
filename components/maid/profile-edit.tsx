@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Pencil } from "lucide-react";
@@ -61,12 +61,12 @@ export function ProfileEdit({ open, onOpenChange, form, onFormChange, onSave }: 
 
   return (
     <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>プロフィール編集</DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-4 space-y-4">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>プロフィール編集</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="flex justify-center">
               <div className="relative">
                 {tempForm.image ? (
@@ -102,14 +102,14 @@ export function ProfileEdit({ open, onOpenChange, form, onFormChange, onSave }: 
               />
             </div>
           </div>
-          <DrawerFooter>
+          <DialogFooter className="flex flex-row justify-end gap-2">
             <Button onClick={handleSave}>保存</Button>
-            <DrawerClose asChild>
+            <DialogClose asChild>
               <Button variant="outline">キャンセル</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ImageCropDialog
         open={showCropper}

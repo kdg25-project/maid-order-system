@@ -1,4 +1,4 @@
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,12 +38,12 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLea
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>ユーザー情報を編集</DrawerTitle>
-        </DrawerHeader>
-        <div className="space-y-4 px-4 pb-4">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>ユーザー情報を編集</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">名前</label>
             <Input
@@ -82,7 +82,7 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLea
             </div>
           </div>
         </div>
-        <DrawerFooter>
+        <DialogFooter className="flex flex-row justify-end gap-2">
           {onLeave && (
             <Button
               onClick={handleLeaveClick}
@@ -93,11 +93,11 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLea
             </Button>
           )}
           <Button onClick={onSave}>保存</Button>
-          <DrawerClose asChild>
+          <DialogClose asChild>
             <Button variant="outline">キャンセル</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
 
       <AlertMessage
         open={isLeaveConfirmOpen}
@@ -109,6 +109,6 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLea
         showCancel={true}
         onConfirm={handleLeaveConfirm}
       />
-    </Drawer>
+    </Dialog>
   );
 }
