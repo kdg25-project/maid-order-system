@@ -1,68 +1,39 @@
-"use client";
+import { getMenus } from "@/api/menus";
+import Image from "next/image";
+import MaidCafe_Logo from "@/public/MaidCafe_Logo_minify.svg";
+import OrderCard from "@/components/order/order-card";
+import { Menu } from "../types";
+import DrinkText from "@/public/drink_text.svg";
 
-import { OrderTable } from "@/components/order";
-import { getMenus} from "@/api/menus"; 
-import { useState, useEffect } from "react";
-import { type Menu } from "../types";
-import Image from 'next/image';
-import logoSrc from '@/public/logo.svg';
-import drinkSrc from '@/public/drink.svg';
+export default async function OrderPage() {
+  const res = await getMenus();
+  const menus = res.data.data.menus;
 
-function Page() {
-  const [menus, setMenus] = useState<Menu[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-
-  
-  useEffect(() => {
-      const fetchMenus = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await getMenus({ available_only: true });
-            setMenus(response.data.data.menus);
-            
-          } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "不明なエラー";
-                console.error("致命的なエラー:", e);
-                setError(errorMessage);
-            } finally {
-          setIsLoading(false);
-            }
-      };
-    fetchMenus();
-    }, []);
-
-    return (
-      <div>
-        <div className="mx-auto mt-8 w-32 h-auto">
-          <Image src={logoSrc} alt="logo" width={128} height={64} className="w-32 h-auto mx-auto" />
-        </div>
-        <div className="min-h-screen p-4">
-          
-          {isLoading && (
-              <div className="text-center text-gray-700 mt-8">
-                  データを読み込み中...
-              </div>
-          )}
-          {error && (
-              <div className="text-center text-red-600 font-bold mt-8 p-4 bg-red-100 rounded-lg mx-auto w-fit">
-                エラーが発生しました: {error}
-              </div>
-          )}
-          {!isLoading && !error && (
-              <div className="mt-8">
-                <div className="px-4 py-0 flex justify-center items-center w-fit mx-auto mb-8">
-                <Image src={drinkSrc} alt="drink" width={128} height={64} className="w-32 h-auto mx-auto" />
-                </div>
-                <OrderTable item={menus} />
-              </div>
-          )}
-        </div>
+  return (
+    <div className="flex flex-col items-center gap-4 p-4">
+      <Image src={MaidCafe_Logo} width={200} alt="メイドカフェのロゴ"></Image>
+      <h2>
+        <Image src={DrinkText} width={100} alt="ドリンクと書かれた文字"></Image>
+      </h2>
+      <p className="font-bold">メニューをタップして選択</p>
+      <div className="grid grid-cols-2 gap-4">
+        {menus
+          .filter((menu: Menu) => menu.name !== "Lotus Biscoff")
+          .map((menu: Menu) => (
+            <OrderCard
+              key={menu.id}
+              name={menu.name}
+              image_url={menu.image_url}
+              description={menu.description}
+              stock={menu.stock}
+              biscoffStock={
+                menus.filter((menu: Menu) => menu.name === "Lotus Biscoff")[0]
+                  .stock
+              }
+              menu_id={menu.id}
+            />
+          ))}
       </div>
-    );
+    </div>
+  );
 }
-
-export default Page;
