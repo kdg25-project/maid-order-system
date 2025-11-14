@@ -29,6 +29,7 @@ import {
   MaidCredentials,
   credentialsFromSearchParams,
   credentialsFromUrl,
+  createMaid,
   dataUrlToFile,
   fetchMaidProfile,
   loadMaidCredentials,
@@ -232,6 +233,9 @@ function MaidLoginContent() {
 
         if (status === "creating_profile") {
           if (cancelled) return;
+          const createdProfile = await createMaid(credentials);
+          if (cancelled) return;
+          setMaidProfile(createdProfile);
           const pausedProfile = await pauseOrFail();
           if (!pausedProfile || cancelled) return;
           setMaidProfile(pausedProfile);
