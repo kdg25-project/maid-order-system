@@ -474,9 +474,7 @@ export default function Home() {
       }
       
       setAssignedUsers((prev) => {
-        return prev.map((user) =>
-          user.id === editingId ? updatedUser : user,
-        );
+        return prev.filter((user) => user.id !== editingId);
       });
       
       showAlert("完了", "ユーザーを退店状態にしました。");
