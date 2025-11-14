@@ -13,7 +13,7 @@ function ErrorContent() {
     <div>
       <div
         className="min-h-screen p-4 rounded-lg shadow-xl
-            bg-gradient-to-tr
+            bg-linear-to-tr
             from-[#FBAFB7]
             via-[#E7D1D9]
             to-[#A8EAEF]"
