@@ -28,11 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          geistSans.variable,
-          geistMono.variable,
-        )}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-fixed bg-linear-to-bl from-[#A8EAEF] via-[#E7D1D9] to-[#FBAFB7]`}
       >
         <ThemeProvider attribute="class" defaultTheme="light">
           {children}
