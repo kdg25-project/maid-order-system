@@ -30,7 +30,7 @@ export default function OrderCard(props: Props) {
           className="w-auto h-auto max-h-24"
           width={96}
           height={96}
-          src={props.image_url ?? "/no_image.png"}
+          src={props.image_url}
           alt={props.name + "の画像"}
         />
         <p className="text-center font-bold h-12 overflow-hidden">
