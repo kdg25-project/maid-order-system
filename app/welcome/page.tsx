@@ -96,14 +96,13 @@ export default function WelcomePage() {
           の体験のすべてを、
           <br />
           <span className="font-bold">アイデアと技術</span>
-          <br />
-          で特別な体験にしてくれます。
+          で特別にしてくれます。
           <br />
           <br />
           <span className="font-bold">{user?.honorific}</span>
           にプレゼントしたカードのQRコードは
           <br />
-          読み込むタイミングで変化しますので、
+          読み込むタイミングで変化しますので,
           <br />
           ぜひ何度も読み込んでみてください！
           <br />
