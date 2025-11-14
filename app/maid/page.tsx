@@ -23,6 +23,7 @@ import { AlertMessage } from "@/components/maid/alert-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { updateUser } from "@/api/users";
 import {
   clearMaidCredentials,
   dataUrlToFile,
@@ -234,6 +235,7 @@ export default function Home() {
   const [isProfileSaving, setProfileSaving] = useState(false);
   const [isActiveUpdating, setActiveUpdating] = useState(false);
   const [isInstaxProcessing, setInstaxProcessing] = useState(false);
+  const [isUserLeaving, setUserLeaving] = useState(false);
   const [form, setForm] = useState<{
     name: string;
     seat_id: number;
@@ -280,7 +282,7 @@ export default function Home() {
     if (!credentials) return;
     setUsersLoading(true);
     try {
-      const users = await fetchAssignedUsers(credentials);
+      const users = await fetchAssignedUsers(credentials, { status: "serving"});
       setAssignedUsers(users);
     } catch (error) {
       const message =
@@ -451,6 +453,44 @@ export default function Home() {
     }
     if (isUserSaving) return;
     void executeUserSave();
+  };
+
+  const handleUserLeave = async () => {
+    if (!editingId || !credentials) {
+      showAlert("エラー", "ユーザー情報が見つかりません。");
+      return;
+    }
+    if (isUserLeaving) return;
+
+    try {
+      setUserLeaving(true);
+      const response = await updateUser(editingId, {
+        status: "leaving",
+        is_valid: false,
+      });
+      
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error("ユーザー情報の更新に失敗しました。");
+      }
+      const updatedUser = response.data.data;
+      if (!updatedUser) {
+        throw new Error("ユーザー情報の更新に失敗しました。");
+      }
+      setAssignedUsers((prev) => {
+        return prev.filter((user) => user.id !== editingId);
+      });
+      
+      showAlert("完了", "ユーザーを退店状態にしました。");
+      closeEditor();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "退店処理に失敗しました。";
+      showAlert("エラー", message);
+    } finally {
+      setUserLeaving(false);
+    }
   };
 
   const handleQRScan = (result: string) => {
@@ -825,63 +865,6 @@ export default function Home() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                提供待ちリスト
-              </CardTitle>
-            </div>
-            <Badge variant="outline">
-              残り {orderResponse.data.orders.length}件
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {orderResponse.data.orders.map((order) => {
-              const menu = menuLookup[order.menu_id];
-              const user = userLookupLocal[order.user_id];
-              const elapsedMinutes = getElapsedMinutes(order.created_at);
-              const elapsedTimeLabel = formatElapsedTime(elapsedMinutes);
-              const seatLabel = user
-                ? `席番号: ${user.seat_id ?? "-"}番`
-                : "席情報なし";
-              const stateStyle =
-                orderStateStyles[order.state] ?? orderStateStyles.pending;
-
-              return (
-                <div
-                  key={order.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-dashed px-4 py-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="text-base font-semibold leading-tight">
-                        {isMenusLoading ? (
-                          <div className="space-y-1" aria-hidden="true">
-                            <div className="h-4 w-32 animate-pulse rounded-full bg-rose-100" />
-                          </div>
-                        ) : menu?.name ? (
-                          menu.name
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            メニュー情報なし
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className={stateStyle.className}>
-                      {stateStyle.label}
-                    </Badge>
-                  </div>
-                  <p className="text-xs font-normal text-muted-foreground">
-                    {seatLabel} ・ 約{elapsedTimeLabel}経過
-                  </p>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">割り当てられたユーザー</CardTitle>
@@ -957,6 +940,8 @@ export default function Home() {
           form={form}
           onFormChange={setForm}
           onSave={handleSave}
+          onLeave={handleUserLeave}
+          isLeaving={isUserLeaving}
         />
 
         <QRCodeScan

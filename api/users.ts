@@ -70,7 +70,9 @@ export async function updateUser(
     seat_id?: number;
     is_valid?: boolean;
   },
+  apiKey?: string,
 ) {
+  const key = getApiKey(apiKey);
   return easyFetch<
     ApiResponse<User>,
     "PATCH",
@@ -87,5 +89,6 @@ export async function updateUser(
     endpoint: `/api/users/${id}`,
     method: "PATCH",
     body: data,
+    headers: key ? { "x-api-key": key } : undefined,
   });
 }
