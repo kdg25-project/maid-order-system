@@ -43,6 +43,7 @@ import { InstaxCamera } from "@/components/maid/instax-camera";
 import InstaxSeatInput from "@/components/maid/instax-seat-input";
 import InstaxConfirmUser from "@/components/maid/instax-confirm-user";
 import InstaxSaved from "@/components/maid/instax-saved";
+import { ActiveMaids } from "@/components/maid/active-maids";
 
 const orderResponse = {
   success: true,
@@ -82,7 +83,8 @@ type QuickActionId =
   | "qrcode"
   | "edit_profile"
   | "logout"
-  | "instax";
+  | "instax"
+  | "active_maids";
 
 type QuickAction = {
   id: QuickActionId;
@@ -108,6 +110,13 @@ const staticQuickActions: QuickAction[] = [
     description: "QRコードをスキャン",
     accent: "bg-indigo-50 text-indigo-500 border-indigo-100",
     icon: ScanQrCode,
+  },
+  {
+    id: "active_maids",
+    label: "稼働中メイド",
+    description: "稼働中のメイドを確認",
+    accent: "bg-purple-50 text-purple-600 border-purple-100",
+    icon: UserIcon,
   },
   {
     id: "edit_profile",
@@ -258,6 +267,7 @@ export default function Home() {
   const [confirmUser, setConfirmUser] = useState<User | null>(null);
   const [savedInstaxId, setSavedInstaxId] = useState<number | null>(null);
   const [isSavedOpen, setSavedOpen] = useState(false);
+  const [isActiveMaidsOpen, setActiveMaidsOpen] = useState(false);
 
   const closeEditor = () => {
     setDrawerOpen(false);
@@ -628,6 +638,8 @@ export default function Home() {
       void handleToggleWorkable();
     } else if (actionId === "qrcode") {
       setQRDrawerOpen(true);
+    } else if (actionId === "active_maids") {
+      setActiveMaidsOpen(true);
     } else if (actionId === "edit_profile") {
       setProfileDrawerOpen(true);
     } else if (actionId === "instax") {
@@ -1128,6 +1140,11 @@ export default function Home() {
           onOpenChange={setAlertOpen}
           title={alertTitle}
           description={alertMessage}
+        />
+
+        <ActiveMaids
+          open={isActiveMaidsOpen}
+          onOpenChange={setActiveMaidsOpen}
         />
       </div>
     </main>
