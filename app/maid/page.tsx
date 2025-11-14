@@ -38,7 +38,6 @@ import {
   updateMaidProfile,
   updateUserInfo,
 } from "@/lib/maid-auth";
-import { updateUser } from "@/api/users";
 import { useForceMaidDeactivate } from "@/lib/force-maid-deactivate";
 import { cn } from "@/lib/utils";
 import { InstaxCamera } from "@/components/maid/instax-camera";
