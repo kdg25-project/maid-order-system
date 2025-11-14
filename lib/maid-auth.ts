@@ -2,10 +2,13 @@ import {
   Maid,
   MaidApiResponse,
   MaidUsersApiResponse,
+  RegisterUserRequest,
   UpdateMaidActiveRequest,
   UpdateUserRequest,
   User,
   UserApiResponse,
+  Instax,
+  InstaxApiResponse,
 } from "@/app/types";
 
 export interface MaidCredentials {
@@ -17,47 +20,11 @@ const STORAGE_KEY = "maid_auth";
 const API_BASE_URL = "https://api.kdgn.tech/api";
 
 const isBrowser = typeof window !== "undefined";
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 1 week
-
-const readCookie = (name: string): string | null => {
-  if (!isBrowser || typeof document === "undefined") return null;
-  const cookies = document.cookie ? document.cookie.split("; ") : [];
-  for (const cookie of cookies) {
-    if (!cookie) continue;
-    const [key, ...rest] = cookie.split("=");
-    if (key === name) {
-      return rest.join("=");
-    }
-  }
-  return null;
-};
-
-const writeCookie = (
-  name: string,
-  value: string,
-  options?: { maxAgeSeconds?: number },
-) => {
-  if (!isBrowser || typeof document === "undefined") return;
-  const attributes = [
-    `${name}=${value}`,
-    "path=/",
-    `max-age=${options?.maxAgeSeconds ?? COOKIE_MAX_AGE_SECONDS}`,
-    "SameSite=Lax",
-  ];
-  document.cookie = attributes.join("; ");
-};
-
-const deleteCookie = (name: string) => {
-  if (!isBrowser || typeof document === "undefined") return;
-  document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-};
 
 export function loadMaidCredentials(): MaidCredentials | null {
   if (!isBrowser) return null;
   try {
-    const cookieValue = readCookie(STORAGE_KEY);
-    if (!cookieValue) return null;
-    const raw = decodeURIComponent(cookieValue);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as MaidCredentials;
     if (!parsed.id || !parsed.apiKey) return null;
@@ -69,13 +36,40 @@ export function loadMaidCredentials(): MaidCredentials | null {
 
 export function saveMaidCredentials(credentials: MaidCredentials) {
   if (!isBrowser) return;
-  const encoded = encodeURIComponent(JSON.stringify(credentials));
-  writeCookie(STORAGE_KEY, encoded);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
 }
 
 export function clearMaidCredentials() {
   if (!isBrowser) return;
-  deleteCookie(STORAGE_KEY);
+  window.localStorage.removeItem(STORAGE_KEY);
+}
+
+
+export function loadMaidId(): string | null {
+  if (!isBrowser) return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<MaidCredentials> | null;
+    const id = parsed?.id?.toString().trim();
+    return id && id.length > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+
+export function loadMaidApiKey(): string | null {
+  if (!isBrowser) return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<MaidCredentials> | null;
+    const key = parsed?.apiKey?.toString().trim();
+    return key && key.length > 0 ? key : null;
+  } catch {
+    return null;
+  }
 }
 
 type SearchParamsLike = {
@@ -210,8 +204,14 @@ export async function updateMaidActiveStatus(
 
 export async function fetchAssignedUsers(
   credentials: MaidCredentials,
+  options?: { status?: "serving" | "leaving" | "both" },
 ): Promise<User[]> {
-  const response = await fetch(apiUrl(`/maids/${credentials.id}/users`), {
+  const url = new URL(apiUrl(`/maids/${credentials.id}/users`));
+  if (options?.status) {
+    url.searchParams.set("status", options.status);
+  }
+
+  const response = await fetch(url.toString(), {
     method: "GET",
     headers: buildAuthHeaders(credentials),
   });
@@ -228,6 +228,70 @@ export async function fetchAssignedUsers(
 
   const data: MaidUsersApiResponse = await response.json();
   return data.data.users;
+}
+
+export async function fetchUserBySeat(
+  credentials: MaidCredentials,
+  seatId: number,
+): Promise<User | null> {
+  const response = await fetch(apiUrl(`/users/seat/${seatId}`), {
+    method: "GET",
+    headers: buildAuthHeaders(credentials),
+  });
+
+  if (response.status === 404) return null;
+
+  if (!response.ok) {
+    throw new Error(`席情報からユーザーの取得に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: { success: boolean; message: string; data: User } = await response.json();
+  return data.data;
+}
+
+export async function registerUserEntry(
+  credentials: MaidCredentials,
+  userId: string,
+  payload: RegisterUserRequest,
+): Promise<User> {
+  const response = await fetch(apiUrl(`/users/${userId}`), {
+    method: "POST",
+    headers: buildAuthHeaders(credentials, {
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ユーザーの登録に失敗しました (status: ${response.status}).`);
+  }
+
+  const data: UserApiResponse = await response.json();
+  return data.data;
+}
+
+export async function postInstaxBySeat(
+  credentials: MaidCredentials,
+  seatId: number,
+  instaxFile: File,
+): Promise<Instax> {
+  const formData = new FormData()
+  formData.append("seat_id", String(seatId))
+  formData.append("maid_id", credentials.id)
+  formData.append("instax", instaxFile, instaxFile.name || "instax.jpg")
+
+  const response = await fetch(apiUrl(`/instax/by-seat`), {
+    method: "POST",
+    headers: buildAuthHeaders(credentials),
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error(`チェキの保存に失敗しました (status: ${response.status}).`)
+  }
+
+  const data: InstaxApiResponse = await response.json()
+  return data.data
 }
 
 export async function updateUserInfo(

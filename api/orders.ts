@@ -11,10 +11,11 @@ import type {
 /**
  * 注文一覧を取得
  */
-export async function getOrders() {
+export async function getOrders(params?: { state?: OrderState }) {
   return easyFetch<ApiResponse<OrdersListResponse>>({
     endpoint: "/api/orders",
     method: "GET",
+    query: params,
   });
 }
 
