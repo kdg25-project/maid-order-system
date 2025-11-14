@@ -50,7 +50,7 @@ export interface Menu {
   name: string;
   stock: number;
   description: string;
-  image_url: string | null;
+  image_url: string;
   created_at: string;
   updated_at: string;
 }
