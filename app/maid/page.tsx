@@ -468,11 +468,13 @@ export default function Home() {
         is_valid: false,
       });
       
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error("ユーザー情報の更新に失敗しました。");
+      }
       const updatedUser = response.data.data;
       if (!updatedUser) {
         throw new Error("ユーザー情報の更新に失敗しました。");
       }
-      
       setAssignedUsers((prev) => {
         return prev.filter((user) => user.id !== editingId);
       });
