@@ -102,7 +102,7 @@ export default function WelcomePage() {
           <span className="font-bold">{user?.honorific}</span>
           にプレゼントしたカードのQRコードは
           <br />
-          読み込むタイミングで変化しますので,
+          読み込むタイミングで変化しますので、
           <br />
           ぜひ何度も読み込んでみてください！
           <br />
