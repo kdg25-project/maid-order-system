@@ -23,6 +23,7 @@ import { AlertMessage } from "@/components/maid/alert-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { updateUser } from "@/api/users";
 import {
   clearMaidCredentials,
   dataUrlToFile,
@@ -233,6 +234,7 @@ export default function Home() {
   const [isProfileSaving, setProfileSaving] = useState(false);
   const [isActiveUpdating, setActiveUpdating] = useState(false);
   const [isInstaxProcessing, setInstaxProcessing] = useState(false);
+  const [isUserLeaving, setUserLeaving] = useState(false);
   const [form, setForm] = useState<{
     name: string;
     seat_id: number;
@@ -450,6 +452,43 @@ export default function Home() {
     }
     if (isUserSaving) return;
     void executeUserSave();
+  };
+
+  const handleUserLeave = async () => {
+    if (!editingId || !credentials) {
+      showAlert("エラー", "ユーザー情報が見つかりません。");
+      return;
+    }
+    if (isUserLeaving) return;
+
+    try {
+      setUserLeaving(true);
+      const response = await updateUser(editingId, {
+        status: "leaving",
+      });
+      
+      const updatedUser = response.data.data;
+      if (!updatedUser) {
+        throw new Error("ユーザー情報の更新に失敗しました。");
+      }
+      
+      setAssignedUsers((prev) => {
+        return prev.map((user) =>
+          user.id === editingId ? updatedUser : user,
+        );
+      });
+      
+      showAlert("完了", "ユーザーを退店状態にしました。");
+      closeEditor();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "退店処理に失敗しました。";
+      showAlert("エラー", message);
+    } finally {
+      setUserLeaving(false);
+    }
   };
 
   const handleQRScan = (result: string) => {
@@ -956,6 +995,8 @@ export default function Home() {
           form={form}
           onFormChange={setForm}
           onSave={handleSave}
+          onLeave={handleUserLeave}
+          isLeaving={isUserLeaving}
         />
 
         <QRCodeScan
