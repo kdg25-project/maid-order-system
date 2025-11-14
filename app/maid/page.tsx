@@ -37,6 +37,7 @@ import {
   updateMaidProfile,
   updateUserInfo,
 } from "@/lib/maid-auth";
+import { updateUser } from "@/api/users";
 import { useForceMaidDeactivate } from "@/lib/force-maid-deactivate";
 import { cn } from "@/lib/utils";
 import { InstaxCamera } from "@/components/maid/instax-camera";
@@ -1077,6 +1078,7 @@ export default function Home() {
             try {
               setInstaxProcessing(true)
               const instax = await postInstaxBySeat(credentials, confirmUser.seat_id, file)
+              await updateUser(confirmUser.id, { status: "instax_waiting" })
               setSavedInstaxId(instax.id)
               setSavedOpen(true)
               setCapturedInstaxDataUrl(null)
