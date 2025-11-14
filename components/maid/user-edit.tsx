@@ -2,6 +2,8 @@ import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerC
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertMessage } from "@/components/maid/alert-message";
+import { useState } from "react";
 
 interface UserEditForm {
   name: string;
@@ -15,13 +17,25 @@ interface UserEditProps {
   form: UserEditForm;
   onFormChange: (form: UserEditForm) => void;
   onSave: () => void;
+  onLeave?: () => void;
+  isLeaving?: boolean;
 }
 
 export const HONORIFIC_OPTIONS = ["ご主人様", "お嬢様"] as const;
 export const DEFAULT_HONORIFIC = HONORIFIC_OPTIONS[0];
 
-export function UserEdit({ open, onOpenChange, form, onFormChange, onSave }: UserEditProps) {
+export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLeave, isLeaving }: UserEditProps) {
   const selectedHonorific = form.honorific || DEFAULT_HONORIFIC;
+  const [isLeaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+
+  const handleLeaveClick = () => {
+    setLeaveConfirmOpen(true);
+  };
+
+  const handleLeaveConfirm = () => {
+    setLeaveConfirmOpen(false);
+    onLeave?.();
+  };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -69,12 +83,32 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave }: Use
           </div>
         </div>
         <DrawerFooter>
+          {onLeave && (
+            <Button
+              onClick={handleLeaveClick}
+              variant="destructive"
+              disabled={isLeaving}
+            >
+              {isLeaving ? "退店処理中..." : "退店"}
+            </Button>
+          )}
           <Button onClick={onSave}>保存</Button>
           <DrawerClose asChild>
             <Button variant="outline">キャンセル</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
+
+      <AlertMessage
+        open={isLeaveConfirmOpen}
+        onOpenChange={setLeaveConfirmOpen}
+        title="退店確認"
+        description="このユーザーを退店状態にしますか？"
+        confirmLabel="退店"
+        cancelLabel="キャンセル"
+        showCancel={true}
+        onConfirm={handleLeaveConfirm}
+      />
     </Drawer>
   );
 }
