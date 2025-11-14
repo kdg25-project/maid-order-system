@@ -81,7 +81,7 @@ export default function OrderOverlay(props: Props) {
         // 注文自体は成功しているため、successページへ遷移
       }
 
-      router.push("/order/success");
+      router.push("/order/success?order=success");
     } catch (error) {
       const errorMessage =
         error instanceof Error
