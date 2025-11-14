@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getUserById } from "@/api/users";
 import type { User } from "@/app/types";
+import { useRouter } from "next/navigation";
+import { updateUserState } from "@/api/update-user-state";
 
 export default function WelcomePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -35,6 +37,27 @@ export default function WelcomePage() {
     const timer = setTimeout(() => setShowWelcome(true), 50);
     return () => clearTimeout(timer);
   }, [user]);
+
+  const router = useRouter();
+
+  const handleClick = async () => {
+    try {
+      const userId =
+        typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      if (!userId) {
+        console.error("ユーザーIDが見つかりません");
+        return;
+      }
+      try {
+        await updateUserState(userId, "order");
+      } catch (statusError) {
+        console.error("ステータス更新に失敗しました:", statusError);
+      }
+      router.push("/order");
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center gap-8 p-6">
@@ -66,15 +89,19 @@ export default function WelcomePage() {
           で動くメイドカフェです。
           <br />
           <br />
-          <span className="font-bold">{user?.name}
-          {user?.honorific}</span>の体験のすべてを、
+          <span className="font-bold">
+            {user?.name}
+            {user?.honorific}
+          </span>
+          の体験のすべてを、
           <br />
           <span className="font-bold">アイデアと技術</span>
           <br />
           で特別な体験にしてくれます。
           <br />
           <br />
-          <span className="font-bold">{user?.honorific}</span>にプレゼントしたカードのQRコードは
+          <span className="font-bold">{user?.honorific}</span>
+          にプレゼントしたカードのQRコードは
           <br />
           読み込むタイミングで変化しますので、
           <br />
@@ -91,7 +118,12 @@ export default function WelcomePage() {
           <span className="font-bold">ごゆっくりお楽しみください♡</span>
         </p>
 
-        <Button className="w-full max-w-100" size="lg" asChild>
+        <Button
+          onClick={handleClick}
+          className="w-full max-w-100"
+          size="lg"
+          asChild
+        >
           <Link href="/order">注文へ進む</Link>
         </Button>
       </div>
