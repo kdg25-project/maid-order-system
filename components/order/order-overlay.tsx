@@ -27,7 +27,7 @@ export default function OrderOverlay(props: Props) {
     setIsOrdering(true);
 
     try {
-      const userId = localStorage.getItem("userId");
+      const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
       if (!userId) {
         router.push(
