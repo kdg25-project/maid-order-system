@@ -204,8 +204,14 @@ export async function updateMaidActiveStatus(
 
 export async function fetchAssignedUsers(
   credentials: MaidCredentials,
+  options?: { status?: "serving" | "leaving" | "both" },
 ): Promise<User[]> {
-  const response = await fetch(apiUrl(`/maids/${credentials.id}/users`), {
+  const url = new URL(apiUrl(`/maids/${credentials.id}/users`));
+  if (options?.status) {
+    url.searchParams.set("status", options.status);
+  }
+
+  const response = await fetch(url.toString(), {
     method: "GET",
     headers: buildAuthHeaders(credentials),
   });

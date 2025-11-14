@@ -83,16 +83,16 @@ export function UserEdit({ open, onOpenChange, form, onFormChange, onSave, onLea
           </div>
         </div>
         <DrawerFooter>
-          <Button onClick={onSave}>保存</Button>
           {onLeave && (
-            <Button 
-              onClick={handleLeaveClick} 
+            <Button
+              onClick={handleLeaveClick}
               variant="destructive"
               disabled={isLeaving}
             >
               {isLeaving ? "退店処理中..." : "退店"}
             </Button>
           )}
+          <Button onClick={onSave}>保存</Button>
           <DrawerClose asChild>
             <Button variant="outline">キャンセル</Button>
           </DrawerClose>
