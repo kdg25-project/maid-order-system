@@ -41,13 +41,14 @@ export async function registerUser(
   data: {
     seat_id: number;
     maid_id: string;
+    honorific?: string | null;
     status?: string;
   },
 ) {
   return easyFetch<
     ApiResponse<User>,
     "POST",
-    { seat_id: number; maid_id: string; status?: string }
+    { seat_id: number; maid_id: string; honorific?: string | null; status?: string }
   >({
     endpoint: `/api/users/${id}`,
     method: "POST",
@@ -63,6 +64,7 @@ export async function updateUser(
   data: {
     name?: string;
     status?: string;
+    honorific?: string | null;
     maid_id?: string;
     instax_maid_id?: string | null;
     seat_id?: number;
@@ -75,6 +77,7 @@ export async function updateUser(
     {
       name?: string;
       status?: string;
+      honorific?: string | null;
       maid_id?: string;
       instax_maid_id?: string | null;
       seat_id?: number;
