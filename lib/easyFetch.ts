@@ -59,6 +59,7 @@ export async function easyFetch<T, M extends Method = "GET", B = unknown>(
     method: req.method,
     headers,
     body: hasBody ? JSON.stringify(req.body) : undefined,
+    cache: "no-store",
   });
 
   // Content判定
